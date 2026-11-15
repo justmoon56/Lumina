@@ -1,0 +1,134 @@
+getgenv().EasyBounce = getgenv().EasyBounce or {
+    Enabled = false,
+    Mode = "Forward",
+    BaseSpeed = 50,
+    ExtraSpeed = 100
+}
+
+local LP = game.Players.LocalPlayer
+local RS = game:GetService("RunService")
+local Cam = workspace.CurrentCamera
+local EB = getgenv().EasyBounce
+
+local state = {
+    speed = EB.BaseSpeed,
+    last = tick(),
+    airTick = 0,
+    airSum = 0,
+    airborne = false,
+    bv = nil
+}
+
+local cachedSpeedometer = nil
+local function getMeter()
+    if cachedSpeedometer and cachedSpeedometer.Parent then
+        return cachedSpeedometer
+    end
+    
+    local ok, v = pcall(function()
+        return LP.PlayerGui.Game.HUD.Overlay.CharacterStatus.BottomLeft.Speedometer.Speed
+    end)
+    
+    if ok and v then
+        cachedSpeedometer = v
+        return v
+    end
+    return nil
+end
+
+local function cut(n) return math.floor(n * 10) / 10 end
+
+local function resetPhysics(hrp)
+    if state.bv then 
+        state.bv:Destroy() 
+        state.bv = nil 
+    end
+    if hrp then
+        for _, child in ipairs(hrp:GetChildren()) do
+            if (child:IsA("BodyVelocity") and child.Name == "BodyVelocity") or child:IsA("BodyForce") then
+                child:Destroy()
+            end
+        end
+    end
+    state.speed = EB.BaseSpeed
+    state.airTick, state.airSum, state.airborne = 0, 0, false
+end
+
+RS.RenderStepped:Connect(function()
+    local spdUI = getMeter()
+
+    if EB.Enabled then
+        if spdUI then
+            pcall(function()
+                spdUI.Text = tostring(cut(state.speed))
+            end)
+        end
+    end
+
+    local ch = LP.Character
+    local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
+    local hum = ch and ch:FindFirstChild("Humanoid")
+    
+    if _G.Fly or not EB.Enabled then
+        resetPhysics(hrp)
+        return 
+    end
+
+    if not hrp or not hum then return end
+
+    local dt = tick() - state.last
+    state.last = tick()
+
+    local inAir = hum.FloorMaterial == Enum.Material.Air
+
+    if state.airborne and not inAir then
+        state.speed = math.max(EB.BaseSpeed, state.speed - 10)
+        state.airSum = 0
+    end
+    state.airborne = inAir
+
+    local shouldPush = true
+
+    if shouldPush then
+        if inAir then
+            state.airSum = state.airSum + dt
+            state.airTick = state.airTick + dt
+            while state.airTick >= 0.04 do
+                state.airTick = state.airTick - 0.04
+                state.speed = math.min(EB.BaseSpeed + EB.ExtraSpeed, state.speed + 0.1)
+            end
+        else
+            state.airTick, state.airSum = 0, 0
+            state.speed = math.max(EB.BaseSpeed, state.speed - (2.5 * dt))
+        end
+
+        if not state.bv or state.bv.Parent ~= hrp then
+            if state.bv then state.bv:Destroy() end
+            state.bv = Instance.new("BodyVelocity")
+            state.bv.Name = "BodyVelocity"
+            state.bv.Parent = hrp
+        end
+        
+        local camDir = Cam.CFrame.LookVector
+        local moveDir = Vector3.new(camDir.X, 0, camDir.Z).Unit
+        
+        if EB.Mode == "Back" then
+            moveDir = -moveDir
+        end
+
+        state.bv.Velocity = moveDir * state.speed
+        state.bv.MaxForce = Vector3.new(4e5, 0, 4e5) 
+
+        if spdUI then
+            pcall(function()
+                spdUI.Text = tostring(cut(state.speed))
+            end)
+        end
+    else
+        if state.bv then
+            state.bv.MaxForce = Vector3.new(0, 0, 0) 
+            state.bv.Velocity = Vector3.new(0, 0, 0)
+        end
+        state.speed = EB.BaseSpeed
+    end
+end)
