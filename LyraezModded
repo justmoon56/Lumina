@@ -1,21 +1,6 @@
 --[[
-	LYRA UI · v1.0.0
+	LYRA UI · v1.0.0 (Enhanced with Fluent Shine, Gradients & Global Lyra Functions)
 	A native Roblox interface library by lyraEz.
-	The window, navigation, controls and notifications of Lyra Avatar Studio, packaged so any script can use them.
-	Everything is built from plain Roblox instances: no remote UI assets, no external modules.
-
-	QUICK START
-		local Lyra = loadstring(game:HttpGet("https://raw.githubusercontent.com/lyraEz/Library-UI/main/src/Lyra.lua"))()
-		local Window = Lyra:CreateWindow({Title = "My Hub", Subtitle = "by you · v1.0"})
-		local Home = Window:Tab({Title = "Home", Icon = "user"})
-		Home:Section("Welcome", "Built with Lyra UI.")
-		Home:Toggle({Title = "Enabled", Flag = "Enabled", Callback = function(on) print(on) end})
-		Window:SettingsTab()
-		Window:Notify({Title = "Loaded", Text = "Everything is ready.", Kind = "success"})
-
-	The full reference lives in README.md and on the documentation site (site/docs.html).
-	Icons: Lucide (ISC license) and the GitHub/Discord marks (Simple Icons, CC0), baked into one 64 px sprite sheet.
-	It needs an executor with writefile + getcustomasset; without them every icon is drawn with vector frames instead.
 ]]
 
 local Lyra = {
@@ -35,7 +20,6 @@ local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Windows survive re-execution in this registry, so running a script twice replaces its window.
 local Shared = type(getgenv) == "function" and getgenv() or _G
 if type(Shared.LyraUI) ~= "table" then
 	Shared.LyraUI = {}
@@ -44,227 +28,22 @@ end
 local Registry = Shared.LyraUI
 Registry.Windows = Registry.Windows or {}
 
--- Lets public functions be called with a dot or a colon: Lyra.AddTheme(...) and Lyra:AddTheme(...).
-local function args(first, ...)
+-- =============================================================================
+-- GLOBAL LYRA FUNCTIONS (CONVERTED FROM LOCAL)
+-- =============================================================================
+
+function Lyra.Args(first, ...)
 	if first == Lyra then
 		return ...
 	end
 	return first, ...
 end
 
--- =============================================================================
--- THEMES
--- =============================================================================
--- Base: window. Card: panels. Raised: buttons and inputs. Line: borders. Accent/AccentDark: highlights.
--- Text/Muted: copy. Green/Red/Gold: success, error and warning. Link: links. SheenA/SheenB: window sheen.
-
-local THEME_KEYS = {
-	"Base", "Card", "Raised", "Line", "Accent", "AccentDark",
-	"Text", "Muted", "Green", "Red", "Gold", "Link", "SheenA", "SheenB"
-}
-
-local function rgb(r, g, b)
+function Lyra.Rgb(r, g, b)
 	return Color3.fromRGB(r, g, b)
 end
 
-function Lyra.AddTheme(...)
-	local name, colors = args(...)
-	assert(type(name) == "string" and type(colors) == "table", "AddTheme needs (name, colors)")
-
-	local fallback = Lyra.Themes.Lavender or colors
-	local theme = {}
-
-	for _, key in ipairs(THEME_KEYS) do
-		theme[key] = colors[key] or fallback[key]
-	end
-
-	if not Lyra.Themes[name] then
-		table.insert(Lyra.ThemeNames, name)
-	end
-
-	Lyra.Themes[name] = theme
-	return theme
-end
-
--- Default Themes
-Lyra.AddTheme("Lavender", {
-	Base = rgb(19, 18, 29),
-	Card = rgb(30, 28, 45),
-	Raised = rgb(41, 37, 59),
-	Line = rgb(78, 69, 101),
-	Accent = rgb(188, 167, 246),
-	AccentDark = rgb(111, 88, 161),
-	Text = rgb(244, 239, 255),
-	Muted = rgb(201, 193, 223),
-	Green = rgb(137, 221, 187),
-	Red = rgb(244, 151, 171),
-	Gold = rgb(239, 205, 143),
-	Link = rgb(108, 180, 255),
-	SheenA = rgb(235, 211, 255),
-	SheenB = rgb(124, 120, 174)
-})
-
-Lyra.AddTheme("Midnight", {
-	Base = rgb(14, 17, 29),
-	Card = rgb(22, 27, 45),
-	Raised = rgb(31, 38, 61),
-	Line = rgb(64, 78, 112),
-	Accent = rgb(140, 182, 252),
-	AccentDark = rgb(64, 92, 158),
-	Text = rgb(236, 242, 255),
-	Muted = rgb(180, 192, 222),
-	SheenA = rgb(205, 222, 255),
-	SheenB = rgb(92, 112, 172)
-})
-
-Lyra.AddTheme("Rose", {
-	Base = rgb(27, 17, 25),
-	Card = rgb(42, 27, 38),
-	Raised = rgb(56, 36, 50),
-	Line = rgb(108, 72, 94),
-	Accent = rgb(246, 170, 200),
-	AccentDark = rgb(156, 80, 118),
-	Text = rgb(255, 240, 247),
-	Muted = rgb(228, 194, 210),
-	SheenA = rgb(255, 216, 234),
-	SheenB = rgb(172, 112, 142)
-})
-
-Lyra.AddTheme("Mint", {
-	Base = rgb(13, 24, 22),
-	Card = rgb(20, 37, 34),
-	Raised = rgb(28, 50, 46),
-	Line = rgb(58, 100, 91),
-	Accent = rgb(137, 221, 187),
-	AccentDark = rgb(52, 124, 100),
-	Text = rgb(236, 255, 248),
-	Muted = rgb(182, 220, 206),
-	SheenA = rgb(212, 255, 238),
-	SheenB = rgb(88, 150, 130)
-})
-
-Lyra.AddTheme("Ember", {
-	Base = rgb(27, 19, 14),
-	Card = rgb(41, 30, 22),
-	Raised = rgb(55, 41, 30),
-	Line = rgb(108, 83, 60),
-	Accent = rgb(241, 201, 140),
-	AccentDark = rgb(150, 106, 52),
-	Text = rgb(255, 247, 235),
-	Muted = rgb(228, 208, 182),
-	SheenA = rgb(255, 233, 204),
-	SheenB = rgb(172, 132, 92)
-})
-
--- Added Custom Themes
-Lyra.AddTheme("Azure", {
-	Base = rgb(12, 20, 32),
-	Card = rgb(19, 31, 49),
-	Raised = rgb(27, 44, 68),
-	Line = rgb(54, 86, 128),
-	Accent = rgb(96, 178, 255),
-	AccentDark = rgb(42, 102, 172),
-	Text = rgb(235, 246, 255),
-	Muted = rgb(175, 202, 232),
-	SheenA = rgb(190, 226, 255),
-	SheenB = rgb(78, 126, 184)
-})
-
-Lyra.AddTheme("Aqua", {
-	Base = rgb(11, 24, 28),
-	Card = rgb(17, 37, 43),
-	Raised = rgb(24, 52, 60),
-	Line = rgb(48, 98, 112),
-	Accent = rgb(86, 226, 238),
-	AccentDark = rgb(36, 128, 142),
-	Text = rgb(235, 253, 255),
-	Muted = rgb(174, 218, 224),
-	SheenA = rgb(192, 248, 255),
-	SheenB = rgb(74, 152, 166)
-})
-
-Lyra.AddTheme("Darker", {
-	Base = rgb(10, 10, 13),
-	Card = rgb(17, 17, 22),
-	Raised = rgb(25, 25, 32),
-	Line = rgb(50, 50, 62),
-	Accent = rgb(168, 174, 196),
-	AccentDark = rgb(82, 86, 104),
-	Text = rgb(242, 243, 247),
-	Muted = rgb(168, 172, 186),
-	SheenA = rgb(210, 214, 228),
-	SheenB = rgb(86, 90, 108)
-})
-
-Lyra.AddTheme("Ash Gray", {
-	Base = rgb(22, 23, 26),
-	Card = rgb(33, 35, 39),
-	Raised = rgb(45, 48, 53),
-	Line = rgb(82, 87, 96),
-	Accent = rgb(194, 200, 210),
-	AccentDark = rgb(106, 112, 122),
-	Text = rgb(245, 246, 248),
-	Muted = rgb(188, 192, 200),
-	SheenA = rgb(226, 230, 236),
-	SheenB = rgb(122, 128, 138)
-})
-
-Lyra.AddTheme("Amber", {
-	Base = rgb(26, 19, 11),
-	Card = rgb(39, 29, 17),
-	Raised = rgb(54, 40, 24),
-	Line = rgb(106, 80, 46),
-	Accent = rgb(252, 186, 76),
-	AccentDark = rgb(162, 106, 28),
-	Text = rgb(255, 247, 232),
-	Muted = rgb(228, 206, 170),
-	SheenA = rgb(255, 228, 178),
-	SheenB = rgb(176, 132, 72)
-})
-
-Lyra.AddTheme("Amethyst", {
-	Base = rgb(22, 14, 30),
-	Card = rgb(34, 22, 46),
-	Raised = rgb(47, 31, 63),
-	Line = rgb(92, 62, 120),
-	Accent = rgb(206, 134, 255),
-	AccentDark = rgb(118, 62, 166),
-	Text = rgb(248, 238, 255),
-	Muted = rgb(210, 184, 230),
-	SheenA = rgb(236, 198, 255),
-	SheenB = rgb(138, 92, 178)
-})
-
-Lyra.AddTheme("Charcoal", {
-	Base = rgb(16, 17, 19),
-	Card = rgb(25, 27, 30),
-	Raised = rgb(35, 38, 42),
-	Line = rgb(66, 71, 78),
-	Accent = rgb(156, 168, 182),
-	AccentDark = rgb(84, 92, 102),
-	Text = rgb(240, 242, 245),
-	Muted = rgb(176, 182, 190),
-	SheenA = rgb(212, 218, 226),
-	SheenB = rgb(98, 106, 116)
-})
-
--- Typography: Builder Sans is Roblox's own UI face (clear at small sizes). Falls back to Gotham.
-Lyra.Font = {
-	Regular = Enum.Font.Gotham,
-	Bold = Enum.Font.GothamBold,
-	Code = Enum.Font.Code
-}
-
-pcall(function()
-	local regular, bold = Enum.Font.BuilderSansMedium, Enum.Font.BuilderSansBold
-	Lyra.Font.Regular, Lyra.Font.Bold = regular, bold
-end)
-
--- =============================================================================
--- SMALL HELPERS
--- =============================================================================
-
-local function new(class, props, parent)
+function Lyra.Inst(class, props, parent)
 	local item = Instance.new(class)
 	for key, value in pairs(props or {}) do
 		item[key] = value
@@ -275,14 +54,14 @@ local function new(class, props, parent)
 	return item
 end
 
-local function round(item, radius)
-	return new("UICorner", {
+function Lyra.Round(item, radius)
+	return Lyra.Inst("UICorner", {
 		CornerRadius = UDim.new(0, radius or 14)
 	}, item)
 end
 
-local function padding(item, top, right, bottom, left)
-	return new("UIPadding", {
+function Lyra.Padding(item, top, right, bottom, left)
+	return Lyra.Inst("UIPadding", {
 		PaddingTop = UDim.new(0, top or 0),
 		PaddingRight = UDim.new(0, right or 0),
 		PaddingBottom = UDim.new(0, bottom or 0),
@@ -290,16 +69,15 @@ local function padding(item, top, right, bottom, left)
 	}, item)
 end
 
-local function list(item, gap, direction)
-	return new("UIListLayout", {
+function Lyra.ListLayout(item, gap, direction)
+	return Lyra.Inst("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		Padding = UDim.new(0, gap or 8),
 		FillDirection = direction or Enum.FillDirection.Vertical
 	}, item)
 end
 
--- Every label is nudged up one step so 9-11 px captions stay readable on phones.
-local function textSize(n)
+function Lyra.TextSize(n)
 	n = n or 14
 	if n <= 10 then
 		return 12
@@ -311,14 +89,14 @@ local function textSize(n)
 	return n
 end
 
-local function measure(text, size, font, width)
+function Lyra.Measure(text, size, font, width)
 	local ok, bounds = pcall(function()
 		return TextService:GetTextSize(tostring(text), size, font, Vector2.new(width or 1000, 1000))
 	end)
 	return ok and bounds or Vector2.new(#tostring(text) * size * 0.55, size + 4)
 end
 
-local function hex(color)
+function Lyra.Hex(color)
 	return string.format(
 		"#%02X%02X%02X",
 		math.floor(color.R * 255 + 0.5),
@@ -327,12 +105,12 @@ local function hex(color)
 	)
 end
 
-local function isPointer(input)
+function Lyra.IsPointer(input)
 	return input.UserInputType == Enum.UserInputType.MouseButton1
 		or input.UserInputType == Enum.UserInputType.Touch
 end
 
-local function copyText(text)
+function Lyra.CopyText(text)
 	local copy = (type(setclipboard) == "function" and setclipboard)
 		or (type(toclipboard) == "function" and toclipboard)
 		or nil
@@ -342,8 +120,7 @@ local function copyText(text)
 	return (pcall(copy, text))
 end
 
--- Options are given as {"A", "B"} or {{Value = 1, Label = "One"}, ...}.
-local function normalizeOptions(options)
+function Lyra.NormalizeOptions(options)
 	local result = {}
 	for _, option in ipairs(options or {}) do
 		if type(option) == "table" then
@@ -366,7 +143,7 @@ local function normalizeOptions(options)
 	return result
 end
 
-local function labelFor(options, value)
+function Lyra.LabelFor(options, value)
 	for _, option in ipairs(options) do
 		if option.Value == value then
 			return option.Label
@@ -375,7 +152,7 @@ local function labelFor(options, value)
 	return nil
 end
 
-local function initials(text)
+function Lyra.Initials(text)
 	local letters = ""
 	for word in tostring(text):gmatch("%w+") do
 		letters = letters .. word:sub(1, 1):upper()
@@ -386,42 +163,595 @@ local function initials(text)
 	return letters ~= "" and letters or "UI"
 end
 
--- Executor file helpers. Each one fails quietly when the function is missing.
-local Files = {}
-
-function Files.read(path)
-	if type(readfile) ~= "function" then
-		return nil
+function Lyra.ResolveTheme(value)
+	if type(value) == "string" and Lyra.Themes[value] then
+		return Lyra.Themes[value], value
 	end
-	if type(isfile) == "function" then
-		local ok, exists = pcall(isfile, path)
-		if not ok or not exists then
-			return nil
+	if type(value) == "table" then
+		local base = Lyra.Themes[value.Extends or "Lavender"] or Lyra.Themes.Lavender
+		local theme = {}
+		for _, key in ipairs(THEME_KEYS) do
+			theme[key] = value[key] or base[key]
 		end
+		return theme, nil
 	end
-	local ok, data = pcall(readfile, path)
-	return ok and type(data) == "string" and data or nil
+	return Lyra.Themes.Lavender, "Lavender"
 end
 
-function Files.write(path, data)
-	if type(writefile) ~= "function" then
-		return false
-	end
-	local folder = path:match("^(.+)/[^/]+$")
-	if folder and type(makefolder) == "function" then
-		local exists = false
-		if type(isfolder) == "function" then
-			local ok, result = pcall(isfolder, folder)
-			exists = ok and result == true
-		end
-		if not exists then
-			pcall(makefolder, folder)
+function Lyra.RunHooks(hooks, ...)
+	for i = #hooks, 1, -1 do
+		if hooks[i].Root.Parent == nil then
+			table.remove(hooks, i)
 		end
 	end
-	return (pcall(writefile, path, data))
+	for _, hook in ipairs(hooks) do
+		local ok, problem = pcall(hook.Fn, ...)
+		if not ok then
+			warn("[Lyra UI] " .. tostring(problem))
+		end
+	end
 end
 
-local function customAsset()
+function Lyra.Spread(items, gap)
+	local count = #items
+	for index, item in ipairs(items) do
+		item.Position = UDim2.new((index - 1) / count, math.floor((index - 1) * gap / count), 0, 0)
+		item.Size = UDim2.new(1 / count, -math.floor((count - 1) * gap / count), 1, 0)
+	end
+end
+
+function Lyra.Decimals(step)
+	local text = tostring(step)
+	local dot = text:find("%.")
+	return dot and math.min(6, #text - dot) or 0
+end
+
+function Lyra.Snap(value, step, min)
+	local snapped = min + math.floor((value - min) / step + 0.5) * step
+	return tonumber(string.format("%." .. Lyra.Decimals(step) .. "f", snapped))
+end
+
+function Lyra.Escape(text)
+	return (tostring(text):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+end
+
+function Lyra.StepValues(spec)
+	if type(spec.Values) == "table" and #spec.Values > 0 then
+		return spec.Values
+	end
+	local min, max, step = tonumber(spec.Min) or 0, tonumber(spec.Max) or 10, tonumber(spec.Step) or 1
+	if step <= 0 then
+		step = 1
+	end
+	local values = {}
+	for i = 0, math.clamp(math.floor((max - min) / step + 0.5), 0, 1000) do
+		table.insert(values, Lyra.Snap(min + i * step, step, min))
+	end
+	return values
+end
+
+-- =============================================================================
+-- ANIMATION / SHINE SYSTEM (FLUENT STYLE)
+-- =============================================================================
+local Animation
+do
+	local _RunService = game:GetService("RunService")
+	local _conns = {}
+	Animation = {}
+	function Animation.Apply(theme, root)
+		for _, c in ipairs(_conns) do pcall(function() c:Disconnect() end) end
+		table.clear(_conns)
+		if not theme or not root or not getgenv().ShineEnabled or not theme.ShineEnabled or not theme.Shine then return end
+		local ShineConfig   = theme.Shine
+		local Speed         = ShineConfig.Speed         or 0.5
+		local RotationSpeed = ShineConfig.RotationSpeed or 25
+		local ColorSeq      = ShineConfig.ColorSequence
+		for _, obj in ipairs(root:GetDescendants()) do
+			if obj:IsA("UIGradient") then
+				local conn
+				conn = _RunService.RenderStepped:Connect(function(dt)
+					local t = (obj:GetAttribute("_t") or 0) + dt * Speed
+					obj:SetAttribute("_t", t)
+					obj.Rotation = (t * RotationSpeed) % 360
+					obj.Color    = ColorSeq
+				end)
+				table.insert(_conns, conn)
+			end
+			if obj:IsA("UIStroke") and theme.StrokeShine then
+				local from  = theme.StrokeDark or theme.Line
+				local shine = theme.Accent
+				local conn
+				conn = _RunService.RenderStepped:Connect(function(dt)
+					local t = (obj:GetAttribute("_t") or 0) + dt * Speed
+					obj:SetAttribute("_t", t)
+					obj.Thickness = 2
+					obj.Color     = from:Lerp(shine, (math.sin(t) + 1) / 2)
+				end)
+				table.insert(_conns, conn)
+			end
+		end
+	end
+end
+if not Animation then Animation = {Apply = function() end} end
+getgenv().ShineEnabled = getgenv().ShineEnabled ~= nil and getgenv().ShineEnabled or true
+getgenv().ButtonGradients = {
+	Background = ColorSequence.new {
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(7, 42, 82)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12, 76, 142)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(21, 97, 181))
+	},
+	Stroke = ColorSequence.new {
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 120, 200)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 40, 80))
+	}
+}
+
+-- =============================================================================
+-- THEMES & FLUENT SHINE PROPERTIES
+-- =============================================================================
+
+THEME_KEYS = {
+	"Base", "Card", "Raised", "Line", "Accent", "AccentDark",
+	"Text", "Muted", "Green", "Red", "Gold", "Link", "SheenA", "SheenB",
+	"ShineEnabled", "Shine", "StrokeShine", "StrokeDark", "ButtonGradient"
+}
+
+function Lyra.AddTheme(...)
+	local name, colors = Lyra.Args(...)
+	assert(type(name) == "string" and type(colors) == "table", "AddTheme needs (name, colors)")
+
+	local fallback = Lyra.Themes.Lavender or colors
+	local theme = {}
+
+	for _, key in ipairs(THEME_KEYS) do
+		theme[key] = colors[key] or fallback[key]
+	end
+
+	if not Lyra.Themes[name] then
+		table.insert(Lyra.ThemeNames, name)
+	end
+
+	Lyra.Themes[name] = theme
+	return theme
+end
+
+-- Default & Custom Themes with Fluent Shine Data Added
+Lyra.AddTheme("Lavender", {
+	Base = Lyra.Rgb(19, 18, 29),
+	Card = Lyra.Rgb(30, 28, 45),
+	Raised = Lyra.Rgb(41, 37, 59),
+	Line = Lyra.Rgb(78, 69, 101),
+	Accent = Lyra.Rgb(188, 167, 246),
+	AccentDark = Lyra.Rgb(111, 88, 161),
+	Text = Lyra.Rgb(244, 239, 255),
+	Muted = Lyra.Rgb(201, 193, 223),
+	Green = Lyra.Rgb(137, 221, 187),
+	Red = Lyra.Rgb(244, 151, 171),
+	Gold = Lyra.Rgb(239, 205, 143),
+	Link = Lyra.Rgb(108, 180, 255),
+	SheenA = Lyra.Rgb(235, 211, 255),
+	SheenB = Lyra.Rgb(124, 120, 174),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(111, 88, 161)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(188, 167, 246)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(111, 88, 161))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(78, 69, 101),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(111, 88, 161)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 45, 95))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(188, 167, 246)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(78, 69, 101))
+		})
+	}
+})
+
+Lyra.AddTheme("Midnight", {
+	Base = Lyra.Rgb(14, 17, 29),
+	Card = Lyra.Rgb(22, 27, 45),
+	Raised = Lyra.Rgb(31, 38, 61),
+	Line = Lyra.Rgb(64, 78, 112),
+	Accent = Lyra.Rgb(140, 182, 252),
+	AccentDark = Lyra.Rgb(64, 92, 158),
+	Text = Lyra.Rgb(236, 242, 255),
+	Muted = Lyra.Rgb(180, 192, 222),
+	SheenA = Lyra.Rgb(205, 222, 255),
+	SheenB = Lyra.Rgb(92, 112, 172),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(64, 92, 158)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 182, 252)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(64, 92, 158))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(64, 78, 112),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(64, 92, 158)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 45, 80))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 182, 252)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(64, 78, 112))
+		})
+	}
+})
+
+Lyra.AddTheme("Rose", {
+	Base = Lyra.Rgb(27, 17, 25),
+	Card = Lyra.Rgb(42, 27, 38),
+	Raised = Lyra.Rgb(56, 36, 50),
+	Line = Lyra.Rgb(108, 72, 94),
+	Accent = Lyra.Rgb(246, 170, 200),
+	AccentDark = Lyra.Rgb(156, 80, 118),
+	Text = Lyra.Rgb(255, 240, 247),
+	Muted = Lyra.Rgb(228, 194, 210),
+	SheenA = Lyra.Rgb(255, 216, 234),
+	SheenB = Lyra.Rgb(172, 112, 142),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(156, 80, 118)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(246, 170, 200)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(156, 80, 118))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(108, 72, 94),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(156, 80, 118)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 40, 60))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(246, 170, 200)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(108, 72, 94))
+		})
+	}
+})
+
+Lyra.AddTheme("Mint", {
+	Base = Lyra.Rgb(13, 24, 22),
+	Card = Lyra.Rgb(20, 37, 34),
+	Raised = Lyra.Rgb(28, 50, 46),
+	Line = Lyra.Rgb(58, 100, 91),
+	Accent = Lyra.Rgb(137, 221, 187),
+	AccentDark = Lyra.Rgb(52, 124, 100),
+	Text = Lyra.Rgb(236, 255, 248),
+	Muted = Lyra.Rgb(182, 220, 206),
+	SheenA = Lyra.Rgb(212, 255, 238),
+	SheenB = Lyra.Rgb(88, 150, 130),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 124, 100)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(137, 221, 187)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(52, 124, 100))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(58, 100, 91),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 124, 100)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 60, 50))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(137, 221, 187)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(58, 100, 91))
+		})
+	}
+})
+
+Lyra.AddTheme("Ember", {
+	Base = Lyra.Rgb(27, 19, 14),
+	Card = Lyra.Rgb(41, 30, 22),
+	Raised = Lyra.Rgb(55, 41, 30),
+	Line = Lyra.Rgb(108, 83, 60),
+	Accent = Lyra.Rgb(241, 201, 140),
+	AccentDark = Lyra.Rgb(150, 106, 52),
+	Text = Lyra.Rgb(255, 247, 235),
+	Muted = Lyra.Rgb(228, 208, 182),
+	SheenA = Lyra.Rgb(255, 233, 204),
+	SheenB = Lyra.Rgb(172, 132, 92),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 106, 52)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(241, 201, 140)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 106, 52))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(108, 83, 60),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 106, 52)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 55, 25))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(241, 201, 140)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(108, 83, 60))
+		})
+	}
+})
+
+Lyra.AddTheme("Azure", {
+	Base = Lyra.Rgb(12, 20, 32),
+	Card = Lyra.Rgb(19, 31, 49),
+	Raised = Lyra.Rgb(27, 44, 68),
+	Line = Lyra.Rgb(54, 86, 128),
+	Accent = Lyra.Rgb(96, 178, 255),
+	AccentDark = Lyra.Rgb(42, 102, 172),
+	Text = Lyra.Rgb(235, 246, 255),
+	Muted = Lyra.Rgb(175, 202, 232),
+	SheenA = Lyra.Rgb(190, 226, 255),
+	SheenB = Lyra.Rgb(78, 126, 184),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(42, 102, 172)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(96, 178, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(42, 102, 172))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(54, 86, 128),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(42, 102, 172)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 50, 90))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(96, 178, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(54, 86, 128))
+		})
+	}
+})
+
+Lyra.AddTheme("Aqua", {
+	Base = Lyra.Rgb(11, 24, 28),
+	Card = Lyra.Rgb(17, 37, 43),
+	Raised = Lyra.Rgb(24, 52, 60),
+	Line = Lyra.Rgb(48, 98, 112),
+	Accent = Lyra.Rgb(86, 226, 238),
+	AccentDark = Lyra.Rgb(36, 128, 142),
+	Text = Lyra.Rgb(235, 253, 255),
+	Muted = Lyra.Rgb(174, 218, 224),
+	SheenA = Lyra.Rgb(192, 248, 255),
+	SheenB = Lyra.Rgb(74, 152, 166),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 128, 142)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(86, 226, 238)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(36, 128, 142))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(48, 98, 112),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 128, 142)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 65, 75))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(86, 226, 238)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(48, 98, 112))
+		})
+	}
+})
+
+Lyra.AddTheme("Darker", {
+	Base = Lyra.Rgb(10, 10, 13),
+	Card = Lyra.Rgb(17, 17, 22),
+	Raised = Lyra.Rgb(25, 25, 32),
+	Line = Lyra.Rgb(50, 50, 62),
+	Accent = Lyra.Rgb(168, 174, 196),
+	AccentDark = Lyra.Rgb(82, 86, 104),
+	Text = Lyra.Rgb(242, 243, 247),
+	Muted = Lyra.Rgb(168, 172, 186),
+	SheenA = Lyra.Rgb(210, 214, 228),
+	SheenB = Lyra.Rgb(86, 90, 108),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(82, 86, 104)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(168, 174, 196)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(82, 86, 104))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(50, 50, 62),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(82, 86, 104)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 42, 52))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(168, 174, 196)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 62))
+		})
+	}
+})
+
+Lyra.AddTheme("Ash Gray", {
+	Base = Lyra.Rgb(22, 23, 26),
+	Card = Lyra.Rgb(33, 35, 39),
+	Raised = Lyra.Rgb(45, 48, 53),
+	Line = Lyra.Rgb(82, 87, 96),
+	Accent = Lyra.Rgb(194, 200, 210),
+	AccentDark = Lyra.Rgb(106, 112, 122),
+	Text = Lyra.Rgb(245, 246, 248),
+	Muted = Lyra.Rgb(188, 192, 200),
+	SheenA = Lyra.Rgb(226, 230, 236),
+	SheenB = Lyra.Rgb(122, 128, 138),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(106, 112, 122)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(194, 200, 210)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(106, 112, 122))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(82, 87, 96),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(106, 112, 122)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 58, 64))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(194, 200, 210)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(82, 87, 96))
+		})
+	}
+})
+
+Lyra.AddTheme("Amber", {
+	Base = Lyra.Rgb(26, 19, 11),
+	Card = Lyra.Rgb(39, 29, 17),
+	Raised = Lyra.Rgb(54, 40, 24),
+	Line = Lyra.Rgb(106, 80, 46),
+	Accent = Lyra.Rgb(252, 186, 76),
+	AccentDark = Lyra.Rgb(162, 106, 28),
+	Text = Lyra.Rgb(255, 247, 232),
+	Muted = Lyra.Rgb(228, 206, 170),
+	SheenA = Lyra.Rgb(255, 228, 178),
+	SheenB = Lyra.Rgb(176, 132, 72),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(162, 106, 28)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(252, 186, 76)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(162, 106, 28))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(106, 80, 46),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(162, 106, 28)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(85, 55, 12))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(252, 186, 76)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(106, 80, 46))
+		})
+	}
+})
+
+Lyra.AddTheme("Amethyst", {
+	Base = Lyra.Rgb(22, 14, 30),
+	Card = Lyra.Rgb(34, 22, 46),
+	Raised = Lyra.Rgb(47, 31, 63),
+	Line = Lyra.Rgb(92, 62, 120),
+	Accent = Lyra.Rgb(206, 134, 255),
+	AccentDark = Lyra.Rgb(118, 62, 166),
+	Text = Lyra.Rgb(248, 238, 255),
+	Muted = Lyra.Rgb(210, 184, 230),
+	SheenA = Lyra.Rgb(236, 198, 255),
+	SheenB = Lyra.Rgb(138, 92, 178),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(118, 62, 166)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(206, 134, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(118, 62, 166))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(92, 62, 120),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(118, 62, 166)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 30, 90))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(206, 134, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(92, 62, 120))
+		})
+	}
+})
+
+Lyra.AddTheme("Charcoal", {
+	Base = Lyra.Rgb(16, 17, 19),
+	Card = Lyra.Rgb(25, 27, 30),
+	Raised = Lyra.Rgb(35, 38, 42),
+	Line = Lyra.Rgb(66, 71, 78),
+	Accent = Lyra.Rgb(156, 168, 182),
+	AccentDark = Lyra.Rgb(84, 92, 102),
+	Text = Lyra.Rgb(240, 242, 245),
+	Muted = Lyra.Rgb(176, 182, 190),
+	SheenA = Lyra.Rgb(212, 218, 226),
+	SheenB = Lyra.Rgb(98, 106, 116),
+	ShineEnabled = true,
+	Shine = {
+		Speed = 0.5,
+		RotationSpeed = 25,
+		ColorSequence = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(84, 92, 102)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(156, 168, 182)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(84, 92, 102))
+		})
+	},
+	StrokeShine = true,
+	StrokeDark = Lyra.Rgb(66, 71, 78),
+	ButtonGradient = {
+		Background = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(84, 92, 102)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 45, 50))
+		}),
+		Stroke = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(156, 168, 182)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(66, 71, 78))
+		})
+	}
+})
+
+Lyra.Font = {
+	Regular = Enum.Font.Gotham,
+	Bold = Enum.Font.GothamBold,
+	Code = Enum.Font.Code
+}
+
+pcall(function()
+	local regular, bold = Enum.Font.BuilderSansMedium, Enum.Font.BuilderSansBold
+	Lyra.Font.Regular, Lyra.Font.Bold = regular, bold
+end)
+
+local customAsset = function()
 	if type(getcustomasset) == "function" then
 		return getcustomasset
 	end
@@ -431,8 +761,7 @@ local function customAsset()
 	return nil
 end
 
--- Decodes an embedded base64 PNG, checks its size, writes it to the executor workspace and returns its asset id.
-local function embeddedAsset(text, size, path)
+local embeddedAsset = function(text, size, path)
 	local asset = customAsset()
 	assert(asset and type(writefile) == "function", "Custom assets are unavailable")
 
@@ -476,10 +805,8 @@ local function embeddedAsset(text, size, path)
 	return id
 end
 
--- Downloads a PNG or JPEG from the web and returns a usable asset id (needs request/HttpGet, writefile and
--- getcustomasset). Yields; call it inside task.spawn. Returns nil when anything is unavailable.
 function Lyra.WebImage(...)
-	local url, path = args(...)
+	local url, path = Lyra.Args(...)
 	local asset = customAsset()
 	if not asset or type(writefile) ~= "function" then
 		return nil
@@ -533,7 +860,6 @@ for index, iconName in ipairs(Lyra.IconNames) do
 	Lyra.IconIndex[iconName] = index
 end
 
--- Friendly names that point at a sprite.
 Lyra.IconAlias = {
 	avatar = "user",
 	players = "users",
@@ -558,7 +884,6 @@ Lyra.IconAlias = {
 	sliders = "sliders-horizontal"
 }
 
--- The vector drawing used for each sprite when the sheet cannot be loaded.
 local VectorAlias = {
 	["sliders-horizontal"] = "settings",
 	["code-xml"] = "creator",
@@ -602,229 +927,13 @@ local VectorAlias = {
 }
 
 Lyra.IconBytes = 18277
-Lyra.IconData = [=[
+Lyra.IconData = [==[
 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
-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
+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
 ]=]
 
 function Lyra.LoadIcons()
@@ -839,11 +948,8 @@ function Lyra.LoadIcons()
 	return Lyra.IconSheet
 end
 
--- Draws an icon on a 24x24 grid and returns the root plus every coloured part ({instance, property}),
--- so the window can recolour it when the theme changes. name can be a sprite name, an alias,
--- "rbxassetid://123" or a plain asset number.
 local function drawIcon(parent, name, position, color)
-	local root = new("Frame", {
+	local root = Lyra.Inst("Frame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(24, 24),
 		Position = position or UDim2.new()
@@ -857,7 +963,7 @@ local function drawIcon(parent, name, position, color)
 	name = tostring(name or "box")
 
 	if name:find("^rbxasset") or name:find("^rbxthumb") then
-		local image = new("ImageLabel", {
+		local image = Lyra.Inst("ImageLabel", {
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Size = UDim2.fromScale(1, 1),
@@ -873,7 +979,7 @@ local function drawIcon(parent, name, position, color)
 	local index = Lyra.IconIndex[spriteName]
 
 	if Lyra.IconSheet and index then
-		local image = new("ImageLabel", {
+		local image = Lyra.Inst("ImageLabel", {
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Size = UDim2.fromScale(1, 1),
@@ -891,7 +997,7 @@ local function drawIcon(parent, name, position, color)
 
 	local function line(x1, y1, x2, y2)
 		local dx, dy = x2 - x1, y2 - y1
-		local item = new("Frame", {
+		local item = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromOffset((x1 + x2) / 2, (y1 + y2) / 2),
 			Size = UDim2.fromOffset(math.sqrt(dx * dx + dy * dy), 1.8),
@@ -899,24 +1005,24 @@ local function drawIcon(parent, name, position, color)
 			BackgroundColor3 = color,
 			BorderSizePixel = 0
 		}, root)
-		round(item, 2)
+		Lyra.Round(item, 2)
 		table.insert(parts, {item, "BackgroundColor3"})
 	end
 
 	local function box(x, y, w, h, radius, filled)
-		local item = new("Frame", {
+		local item = Lyra.Inst("Frame", {
 			Position = UDim2.fromOffset(x, y),
 			Size = UDim2.fromOffset(w, h),
 			BackgroundColor3 = color,
 			BackgroundTransparency = filled and 0 or 1,
 			BorderSizePixel = 0
 		}, root)
-		round(item, radius or 3)
+		Lyra.Round(item, radius or 3)
 		if filled then
 			table.insert(parts, {item, "BackgroundColor3"})
 		else
 			table.insert(parts, {
-				new("UIStroke", {
+				Lyra.Inst("UIStroke", {
 					Color = color,
 					Thickness = 1
 				}, item),
@@ -1050,11 +1156,8 @@ local function drawIcon(parent, name, position, color)
 end
 
 -- =============================================================================
--- LYRA TOAST · in-GUI notifications (does not use Roblox's SendNotification)
+-- LYRA TOAST
 -- =============================================================================
--- Self-contained: needs only TweenService, TextService and the instances it creates.
--- A toast slides in from the right and fades, a hairline under it shows the time left, and a tap closes it.
--- Heights are measured from the text with TextService, so a toast is always exactly as tall as its content.
 
 local Toast = {}
 Toast.__index = Toast
@@ -1096,7 +1199,7 @@ function Toast.new(options)
 	self.Lift = options.Lift or 0
 	self.Active = {}
 
-	self.Container = new("Frame", {
+	self.Container = Lyra.Inst("Frame", {
 		Name = "LyraToasts",
 		BackgroundTransparency = 1,
 		ZIndex = 200,
@@ -1105,7 +1208,7 @@ function Toast.new(options)
 		Size = UDim2.new(0, self.Width, 1, -(self.Margin * 2 + self.Lift))
 	})
 
-	new("UIListLayout", {
+	Lyra.Inst("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		Padding = UDim.new(0, 6),
 		HorizontalAlignment = Enum.HorizontalAlignment.Right,
@@ -1117,7 +1220,6 @@ function Toast.new(options)
 	return self
 end
 
--- Copies, so the caller's tables and the defaults are never modified.
 function Toast:SetTheme(theme)
 	local merged, kinds = {}, {}
 	for key, value in pairs(Toast.DefaultTheme) do
@@ -1152,11 +1254,10 @@ function Toast:_tween(item, goal, duration)
 	return tween
 end
 
--- Glyphs are laid out on the badge's 24x24 grid with rounded 2 px strokes.
 function Toast.glyph(parent, name, color)
 	local function stroke(x1, y1, x2, y2)
 		local dx, dy = x2 - x1, y2 - y1
-		local item = new("Frame", {
+		local item = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromOffset((x1 + x2) / 2, (y1 + y2) / 2),
 			Size = UDim2.fromOffset(math.sqrt(dx * dx + dy * dy) + 2, 2),
@@ -1165,11 +1266,11 @@ function Toast.glyph(parent, name, color)
 			BorderSizePixel = 0,
 			ZIndex = 203
 		}, parent)
-		round(item, 99)
+		Lyra.Round(item, 99)
 	end
 
 	local function dot(x, y)
-		local item = new("Frame", {
+		local item = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromOffset(x, y),
 			Size = UDim2.fromOffset(2.6, 2.6),
@@ -1177,7 +1278,7 @@ function Toast.glyph(parent, name, color)
 			BorderSizePixel = 0,
 			ZIndex = 203
 		}, parent)
-		round(item, 99)
+		Lyra.Round(item, 99)
 	end
 
 	if name == "check" then
@@ -1205,8 +1306,6 @@ function Toast:Notify(spec)
 	local color, theme = self.Kinds[kind], self.Theme
 	local duration = spec.Duration == nil and 4 or spec.Duration
 
-	-- Fit narrow screens: never wider than the parent minus the margins.
-	-- A featured toast is wider, with a larger picture badge and a stronger accent.
 	local featured = spec.Featured == true
 	local parentWidth = self.Options.Parent.AbsoluteSize.X
 	local wanted = featured and self.Width + 56 or self.Width
@@ -1215,7 +1314,6 @@ function Toast:Notify(spec)
 	self.Container.Size = UDim2.new(0, math.min(self.Width, width), 1, -(self.Margin * 2 + self.Lift))
 	self.Order = self.Order + 1
 
-	-- Fixed layout: every height is measured from the text, so nothing relies on AutomaticSize.
 	local title, text = tostring(spec.Title), spec.Text and tostring(spec.Text) or ""
 	local badgeSize = featured and 40 or Toast.Badge
 	local textLeft, textRight = 20 + badgeSize, 14
@@ -1238,8 +1336,7 @@ function Toast:Notify(spec)
 	local contentHeight = math.max(badgeSize, titleHeight + (textHeight > 0 and textHeight + 1 or 0) + actionHeight)
 	local total = 10 + contentHeight + 11
 
-	-- holder keeps the list slot; card slides inside it.
-	local holder = new("Frame", {
+	local holder = Lyra.Inst("Frame", {
 		Name = "Toast",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(width, total),
@@ -1247,7 +1344,7 @@ function Toast:Notify(spec)
 		ZIndex = 200
 	}, self.Container)
 
-	local card = new("CanvasGroup", {
+	local card = Lyra.Inst("CanvasGroup", {
 		BackgroundColor3 = theme.Background,
 		BackgroundTransparency = 0.06,
 		Size = UDim2.fromScale(1, 1),
@@ -1256,17 +1353,16 @@ function Toast:Notify(spec)
 		BorderSizePixel = 0,
 		ZIndex = 200
 	}, holder)
-	round(card, 12)
+	Lyra.Round(card, 12)
 
-	new("UIStroke", {
+	Lyra.Inst("UIStroke", {
 		Color = featured and color or theme.Line,
 		Transparency = featured and 0.25 or 0.4,
 		Thickness = 1,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	}, card)
 
-	-- Soft wash of the kind's colour from the left edge, fading out across the card.
-	local wash = new("Frame", {
+	local wash = Lyra.Inst("Frame", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = color,
 		BackgroundTransparency = 0,
@@ -1274,7 +1370,7 @@ function Toast:Notify(spec)
 		ZIndex = 200
 	}, card)
 
-	new("UIGradient", {
+	Lyra.Inst("UIGradient", {
 		Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, featured and 0.7 or 0.84),
 			NumberSequenceKeypoint.new(0.45, featured and 0.92 or 0.97),
@@ -1282,9 +1378,8 @@ function Toast:Notify(spec)
 		})
 	}, wash)
 
-	-- Badge with the glyph, the caller's icon or picture, in the kind's colour.
 	local badgeTop = featured and 10 or 10 + math.floor((contentHeight - badgeSize) / 2)
-	local badge = new("Frame", {
+	local badge = Lyra.Inst("Frame", {
 		Position = UDim2.fromOffset(10, badgeTop),
 		Size = UDim2.fromOffset(badgeSize, badgeSize),
 		BackgroundColor3 = color,
@@ -1292,9 +1387,9 @@ function Toast:Notify(spec)
 		BorderSizePixel = 0,
 		ZIndex = 201
 	}, card)
-	round(badge, featured and 12 or 99)
+	Lyra.Round(badge, featured and 12 or 99)
 
-	new("UIStroke", {
+	Lyra.Inst("UIStroke", {
 		Color = color,
 		Transparency = 0.55,
 		Thickness = 1
@@ -1302,26 +1397,26 @@ function Toast:Notify(spec)
 
 	local drew = false
 	if type(spec.Image) == "string" and spec.Image ~= "" then
-		local picture = new("ImageLabel", {
+		local picture = Lyra.Inst("ImageLabel", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			Image = spec.Image,
 			ScaleType = Enum.ScaleType.Crop,
 			ZIndex = 202
 		}, badge)
-		round(picture, featured and 12 or 99)
+		Lyra.Round(picture, featured and 12 or 99)
 		drew = true
 	end
 
 	if not drew and spec.Icon and type(self.Options.Icon) == "function" then
-		local holderIcon = new("Frame", {
+		local holderIcon = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
 			Size = UDim2.fromOffset(24, 24),
 			BackgroundTransparency = 1,
 			ZIndex = 202
 		}, badge)
-		new("UIScale", {Scale = featured and 1 or 0.62}, holderIcon)
+		Lyra.Inst("UIScale", {Scale = featured and 1 or 0.62}, holderIcon)
 		drew = pcall(self.Options.Icon, holderIcon, spec.Icon, UDim2.new(), color)
 		if not drew then
 			holderIcon:Destroy()
@@ -1332,10 +1427,9 @@ function Toast:Notify(spec)
 		Toast.glyph(badge, Toast.KindGlyphs[kind], color)
 	end
 
-	-- Title and optional text, vertically centred next to the badge when short.
 	local top = 10 + math.floor((contentHeight - titleHeight - (textHeight > 0 and textHeight + 1 or 0) - actionHeight) / 2)
 
-	new("TextLabel", {
+	Lyra.Inst("TextLabel", {
 		Position = UDim2.fromOffset(textLeft, top),
 		Size = UDim2.fromOffset(textWidth, titleHeight),
 		BackgroundTransparency = 1,
@@ -1350,7 +1444,7 @@ function Toast:Notify(spec)
 	}, card)
 
 	if textHeight > 0 then
-		new("TextLabel", {
+		Lyra.Inst("TextLabel", {
 			Position = UDim2.fromOffset(textLeft, top + titleHeight + 1),
 			Size = UDim2.fromOffset(textWidth, textHeight),
 			BackgroundTransparency = 1,
@@ -1365,8 +1459,7 @@ function Toast:Notify(spec)
 		}, card)
 	end
 
-	-- Hairline along the bottom, shrinking over the toast's lifetime.
-	local fill = new("Frame", {
+	local fill = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 12, 1, -2),
 		Size = UDim2.new(1, -24, 0, 1),
 		BackgroundColor3 = color,
@@ -1376,8 +1469,7 @@ function Toast:Notify(spec)
 		Visible = duration > 0
 	}, card)
 
-	-- Whole card is tappable to dismiss (unless Dismissible = false); the action button sits above that tap area.
-	local hit = spec.Dismissible ~= false and new("TextButton", {
+	local hit = spec.Dismissible ~= false and Lyra.Inst("TextButton", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Text = "",
@@ -1388,10 +1480,10 @@ function Toast:Notify(spec)
 	local actionButton
 	if action then
 		local label = tostring(action.Text or "Open")
-		local bounds = measure(label, 13, self.Font.Bold, 1000)
+		local bounds = Lyra.Measure(label, 13, self.Font.Bold, 1000)
 		local buttonWidth = math.clamp(math.ceil(bounds.X) + 28, 90, math.max(90, textWidth))
 
-		actionButton = new("TextButton", {
+		actionButton = Lyra.Inst("TextButton", {
 			Position = UDim2.fromOffset(textLeft, top + titleHeight + (textHeight > 0 and textHeight + 1 or 0) + 8),
 			Size = UDim2.fromOffset(buttonWidth, 30),
 			BackgroundColor3 = color,
@@ -1403,7 +1495,7 @@ function Toast:Notify(spec)
 			BorderSizePixel = 0,
 			ZIndex = 205
 		}, card)
-		round(actionButton, 9)
+		Lyra.Round(actionButton, 9)
 	end
 
 	local handle = {Closed = false}
@@ -1550,37 +1642,8 @@ local DEFAULT_SETTINGS = {
 	Theme = ""
 }
 
-local function resolveTheme(value)
-	if type(value) == "string" and Lyra.Themes[value] then
-		return Lyra.Themes[value], value
-	end
-	if type(value) == "table" then
-		local base = Lyra.Themes[value.Extends or "Lavender"] or Lyra.Themes.Lavender
-		local theme = {}
-		for _, key in ipairs(THEME_KEYS) do
-			theme[key] = value[key] or base[key]
-		end
-		return theme, nil
-	end
-	return Lyra.Themes.Lavender, "Lavender"
-end
-
-local function runHooks(hooks, ...)
-	for i = #hooks, 1, -1 do
-		if hooks[i].Root.Parent == nil then
-			table.remove(hooks, i)
-		end
-	end
-	for _, hook in ipairs(hooks) do
-		local ok, problem = pcall(hook.Fn, ...)
-		if not ok then
-			warn("[Lyra UI] " .. tostring(problem))
-		end
-	end
-end
-
 function Lyra.CreateWindow(...)
-	local options = args(...)
+	local options = Lyra.Args(...)
 	options = type(options) == "table" and options or {}
 
 	local self = setmetatable({}, Window)
@@ -1631,17 +1694,13 @@ function Lyra.CreateWindow(...)
 
 	self:_loadConfig()
 	local saved = self.Settings.Theme
-	self.Theme, self.ThemeName = resolveTheme(saved ~= "" and Lyra.Themes[saved] and saved or options.Theme)
+	self.Theme, self.ThemeName = Lyra.ResolveTheme(saved ~= "" and Lyra.Themes[saved] and saved or options.Theme)
 	self:_build()
 
 	return self
 end
 
 Lyra.new = Lyra.CreateWindow
-
--- -----------------------------------------------------------------------------
--- Config: interface settings and element flags in one JSON file.
--- -----------------------------------------------------------------------------
 
 function Window:_loadConfig()
 	local o, s = self.Options, {}
@@ -1744,7 +1803,6 @@ function Window:_queueSave()
 	end)
 end
 
--- The starting value of an element: its saved flag when one exists, otherwise the default.
 function Window:_initial(spec, default)
 	local flag = spec.Flag
 	if flag ~= nil then
@@ -1786,11 +1844,6 @@ function Window:SetFlag(flag, value)
 	end
 end
 
--- -----------------------------------------------------------------------------
--- Plumbing: connections, callbacks, tweens and theme painting.
--- -----------------------------------------------------------------------------
-
--- Global signals (UserInputService, RunService…): disconnected by Destroy.
 function Window:_connect(signal, fn)
 	local connection = signal:Connect(function(...)
 		if self.Alive then
@@ -1801,7 +1854,6 @@ function Window:_connect(signal, fn)
 	return connection
 end
 
--- Signals of the window's own instances: they end when the instance is destroyed.
 function Window:_on(signal, fn)
 	return signal:Connect(function(...)
 		if self.Alive then
@@ -1810,7 +1862,6 @@ function Window:_on(signal, fn)
 	end)
 end
 
--- Runs a script callback without letting an error break the interface.
 function Window:_fire(callback, ...)
 	if type(callback) ~= "function" then
 		return
@@ -1826,7 +1877,6 @@ function Window:_fire(callback, ...)
 	end, ...)
 end
 
--- One running tween per instance and channel; a new tween on the same channel replaces the old one.
 function Window:_tween(item, goal, duration, style, direction, channel)
 	if not item or not self.Alive then
 		return
@@ -1881,8 +1931,6 @@ function Window:_stopTween(item, channel)
 	end
 end
 
--- Colours are stored as theme keys ("Accent", "Muted"…) so SetTheme can repaint every instance.
--- A Color3 value is applied as is and stops following the theme.
 function Window:_paint(item, map)
 	local entry = self.Painted[item]
 	if not entry then
@@ -1909,7 +1957,6 @@ function Window:_paint(item, map)
 	return item
 end
 
--- Animated paint; extra holds non-colour goals that belong to the same tween.
 function Window:_tint(item, map, duration, extra)
 	local goal = {}
 	for key, value in pairs(extra or {}) do
@@ -1935,7 +1982,6 @@ function Window:_tint(item, map, duration, extra)
 	self:_tween(item, goal, duration)
 end
 
--- Forgets destroyed instances so lists that re-render do not grow the paint table forever.
 function Window:_prune()
 	local count = 0
 	for item in pairs(self.Painted) do
@@ -1966,7 +2012,7 @@ function Window:_onLayout(root, fn)
 end
 
 function Window:SetTheme(value)
-	local theme, name = resolveTheme(value)
+	local theme, name = Lyra.ResolveTheme(value)
 	self.Theme, self.ThemeName = theme, name
 
 	if name and self.Settings.Theme ~= name then
@@ -1986,7 +2032,8 @@ function Window:SetTheme(value)
 		end
 	end
 
-	runHooks(self.ThemeHooks)
+	Lyra.RunHooks(self.ThemeHooks)
+	Animation.Apply(self.Theme, self.Main)
 
 	local drop = self.SettingControls.Theme
 	if drop and name then
@@ -1998,15 +2045,11 @@ function Window:GetTheme()
 	return self.Theme, self.ThemeName
 end
 
--- -----------------------------------------------------------------------------
--- Building blocks shared by the window and every element.
--- -----------------------------------------------------------------------------
-
 function Window:_text(parent, value, size, color, bold)
-	local label = new("TextLabel", {
+	local label = Lyra.Inst("TextLabel", {
 		BackgroundTransparency = 1,
 		Text = tostring(value or ""),
-		TextSize = textSize(size),
+		TextSize = Lyra.TextSize(size),
 		Font = bold and Lyra.Font.Bold or Lyra.Font.Regular,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
@@ -2029,7 +2072,7 @@ function Window:_paragraph(parent, value, size, color, bold)
 end
 
 function Window:_stroke(item, transparency, color)
-	local stroke = new("UIStroke", {
+	local stroke = Lyra.Inst("UIStroke", {
 		Transparency = transparency or 0.3,
 		Thickness = 1
 	}, item)
@@ -2038,14 +2081,14 @@ function Window:_stroke(item, transparency, color)
 end
 
 function Window:_card(parent, height)
-	local card = new("Frame", {
+	local card = Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, height or 58),
 		BackgroundTransparency = 0.22,
 		BorderSizePixel = 0
 	}, parent)
 
 	self:_paint(card, {BackgroundColor3 = "Card"})
-	round(card, 16)
+	Lyra.Round(card, 16)
 	self:_stroke(card, 0.55)
 	return card
 end
@@ -2053,8 +2096,8 @@ end
 function Window:_autoCard(parent, gap, pad)
 	local card = self:_card(parent, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	list(card, gap or 10)
-	padding(card, pad or 16, pad or 16, pad or 16, pad or 16)
+	Lyra.ListLayout(card, gap or 10)
+	Lyra.Padding(card, pad or 16, pad or 16, pad or 16, pad or 16)
 	return card
 end
 
@@ -2076,7 +2119,7 @@ function Window:_recolor(parts, color)
 end
 
 function Window:_gradient(parent, keyA, keyB, rotation)
-	local gradient = new("UIGradient", {
+	local gradient = Lyra.Inst("UIGradient", {
 		Rotation = rotation or 0
 	}, parent)
 
@@ -2086,40 +2129,38 @@ function Window:_gradient(parent, keyA, keyB, rotation)
 	return gradient
 end
 
--- The brand mark inside a rounded frame: the Logo image, or the title's initials.
 function Window:_brandMark(parent, radius, size)
 	local logo = self.Options.Logo
 	if logo ~= nil and logo ~= "" then
 		if type(logo) == "number" then
 			logo = "rbxassetid://" .. tostring(logo)
 		end
-		local image = new("ImageLabel", {
+		local image = Lyra.Inst("ImageLabel", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Image = tostring(logo),
 			ScaleType = Enum.ScaleType.Crop
 		}, parent)
-		round(image, radius)
+		Lyra.Round(image, radius)
 		return image
 	end
 
-	local letters = self:_text(parent, self.Options.LogoText or initials(self.Title), size or 15, "Text", true)
+	local letters = self:_text(parent, self.Options.LogoText or Lyra.Initials(self.Title), size or 15, "Text", true)
 	letters.Size = UDim2.fromScale(1, 1)
 	letters.TextXAlignment = Enum.TextXAlignment.Center
 	return letters
 end
 
--- Button with hover and press feedback. Key is the theme colour of its background.
 function Window:_button(parent, text, primary, callback, icon)
 	local window = self
-	local root = new("TextButton", {
+	local root = Lyra.Inst("TextButton", {
 		Size = UDim2.new(1, 0, 0, 44),
 		Text = "",
 		AutoButtonColor = false,
 		BorderSizePixel = 0
 	}, parent)
-	round(root, 12)
+	Lyra.Round(root, 12)
 
 	local object = element(root, {
 		Key = primary and "Accent" or "Raised",
@@ -2211,7 +2252,7 @@ function Window:_button(parent, text, primary, callback, icon)
 	end)
 
 	self:_on(root.InputBegan, function(input)
-		if object.Enabled and isPointer(input) then
+		if object.Enabled and Lyra.IsPointer(input) then
 			self:_tween(root, {
 				BackgroundColor3 = self.Theme[object.Key]:Lerp(self.Theme.Base, 0.18)
 			}, 0.08)
@@ -2219,7 +2260,7 @@ function Window:_button(parent, text, primary, callback, icon)
 	end)
 
 	self:_on(root.InputEnded, function(input)
-		if isPointer(input) then
+		if Lyra.IsPointer(input) then
 			self:_tween(root, {BackgroundColor3 = self.Theme[object.Key]})
 		end
 	end)
@@ -2232,7 +2273,6 @@ function Window:_button(parent, text, primary, callback, icon)
 	return object
 end
 
--- A card with a title, a wrapping description and room for a control on the right.
 function Window:_controlCard(parent, title, description, controlWidth)
 	local card = self:_card(parent, 58)
 	local hasText = description ~= nil and description ~= ""
@@ -2253,22 +2293,9 @@ function Window:_controlCard(parent, title, description, controlWidth)
 	end
 
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	padding(card, 0, 0, 9, 0)
+	Lyra.Padding(card, 0, 0, 9, 0)
 	return card, name, hint
 end
-
--- Lays out n children across a row with equal widths and a fixed gap.
-local function spread(items, gap)
-	local count = #items
-	for index, item in ipairs(items) do
-		item.Position = UDim2.new((index - 1) / count, math.floor((index - 1) * gap / count), 0, 0)
-		item.Size = UDim2.new(1 / count, -math.floor((count - 1) * gap / count), 1, 0)
-	end
-end
-
--- -----------------------------------------------------------------------------
--- Shell: the window frame, header, side rail, status line and floating button.
--- -----------------------------------------------------------------------------
 
 function Window:_guiParent()
 	local o = self.Options
@@ -2302,7 +2329,7 @@ function Window:_build()
 		oldBlur:Destroy()
 	end
 
-	self.Gui = new("ScreenGui", {
+	self.Gui = Lyra.Inst("ScreenGui", {
 		Name = guiName,
 		ResetOnSpawn = false,
 		DisplayOrder = o.DisplayOrder or 990,
@@ -2310,7 +2337,7 @@ function Window:_build()
 		IgnoreGuiInset = false
 	}, parent)
 
-	self.Surface = new("Frame", {
+	self.Surface = Lyra.Inst("Frame", {
 		Name = "Surface",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1
@@ -2318,8 +2345,6 @@ function Window:_build()
 
 	self:_setupChat()
 
-	-- Start hidden with the floating button off waits (at most 2 s) for the chat check, because it decides
-	-- whether anything could bring the window back. Start hidden is skipped when nothing could.
 	if s.StartHidden and not s.FloatingButton and self.ChatAlias then
 		local deadline = os.clock() + 2
 		while not self.ChatChecked and os.clock() < deadline do
@@ -2330,7 +2355,7 @@ function Window:_build()
 	self.StartSkipped = s.StartHidden and not self:_canReopen()
 	self.Visible = not (s.StartHidden and not self.StartSkipped)
 
-	self.Main = new("Frame", {
+	self.Main = Lyra.Inst("Frame", {
 		Name = "Window",
 		Position = UDim2.fromOffset(20, 20),
 		Size = UDim2.fromOffset(self.DefaultW, self.DefaultH),
@@ -2341,27 +2366,26 @@ function Window:_build()
 	}, self.Surface)
 
 	self:_paint(self.Main, {BackgroundColor3 = "Base"})
-	round(self.Main, 22)
+	Lyra.Round(self.Main, 22)
 
 	self.WindowStroke = self:_stroke(self.Main, 0.28, "Accent")
-	self.WindowScale = new("UIScale", {Scale = 1}, self.Main)
+	self.WindowScale = Lyra.Inst("UIScale", {Scale = 1}, self.Main)
 	self.Sheen = self:_gradient(self.Main, "SheenA", "SheenB", 65)
 
-	-- Header: brand mark, title, subtitle and the window buttons.
-	self.Header = new("Frame", {
+	self.Header = Lyra.Inst("Frame", {
 		Name = "Header",
 		Size = UDim2.new(1, 0, 0, HEADER),
 		BackgroundTransparency = 1,
 		Active = true
 	}, self.Main)
 
-	self.Logo = new("Frame", {
+	self.Logo = Lyra.Inst("Frame", {
 		Position = UDim2.fromOffset(14, 10),
 		Size = UDim2.fromOffset(32, 32),
 		BorderSizePixel = 0
 	}, self.Header)
 	self:_paint(self.Logo, {BackgroundColor3 = "AccentDark"})
-	round(self.Logo, 11)
+	Lyra.Round(self.Logo, 11)
 	self:_brandMark(self.Logo, 11, 13)
 
 	self.HeaderTitle = self:_text(self.Header, self.Title, 16, "Text", true)
@@ -2398,7 +2422,7 @@ function Window:_build()
 	self.MenuButton.Root.Size = UDim2.fromOffset(42, 42)
 	self.MenuButton.Root.Visible = false
 
-	self.Divider = new("Frame", {
+	self.Divider = Lyra.Inst("Frame", {
 		Position = UDim2.fromOffset(18, HEADER - 1),
 		Size = UDim2.new(1, -36, 0, 1),
 		BackgroundTransparency = 0.8,
@@ -2406,23 +2430,21 @@ function Window:_build()
 	}, self.Main)
 	self:_paint(self.Divider, {BackgroundColor3 = "Line"})
 
-	-- Content: a glass panel behind the pages, which fade in on a CanvasGroup.
-	self.ContentBack = new("Frame", {
+	self.ContentBack = Lyra.Inst("Frame", {
 		BackgroundTransparency = 0.56,
 		BorderSizePixel = 0
 	}, self.Main)
 	self:_paint(self.ContentBack, {BackgroundColor3 = "Card"})
-	round(self.ContentBack, 18)
+	Lyra.Round(self.ContentBack, 18)
 	self:_stroke(self.ContentBack, 0.83, "Accent")
 
-	self.Content = new("CanvasGroup", {
+	self.Content = Lyra.Inst("CanvasGroup", {
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		GroupTransparency = 0
 	}, self.Main)
 
-	-- Side rail: wide with labels, a 60 px icon rail on medium windows, a drawer behind the menu button on narrow ones.
-	self.DrawerScrim = new("TextButton", {
+	self.DrawerScrim = Lyra.Inst("TextButton", {
 		Size = UDim2.new(1, 0, 1, -64),
 		Position = UDim2.fromOffset(0, 64),
 		Text = "",
@@ -2439,7 +2461,7 @@ function Window:_build()
 		self:_layout(false)
 	end)
 
-	self.Nav = new("ScrollingFrame", {
+	self.Nav = Lyra.Inst("ScrollingFrame", {
 		Name = "Rail",
 		CanvasSize = UDim2.fromOffset(0, 470),
 		ScrollBarThickness = 2,
@@ -2452,7 +2474,7 @@ function Window:_build()
 		BackgroundColor3 = "Base",
 		ScrollBarImageColor3 = "AccentDark"
 	})
-	round(self.Nav, 16)
+	Lyra.Round(self.Nav, 16)
 
 	self.NavCaption = self:_text(self.Nav, o.NavCaption or "WORKSPACE", 9, "Muted", true)
 	self.NavCaption.Position = UDim2.fromOffset(14, 7)
@@ -2465,19 +2487,18 @@ function Window:_build()
 	self.NavFooter.TextTruncate = Enum.TextTruncate.None
 	self.NavFooter.TextYAlignment = Enum.TextYAlignment.Bottom
 
-	-- Status line under the content.
-	self.StatusFrame = new("Frame", {
+	self.StatusFrame = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 20, 1, -119),
 		Size = UDim2.new(1, -40, 0, 30),
 		BackgroundTransparency = 1
 	}, self.Main)
 
-	self.StatusDot = new("Frame", {
+	self.StatusDot = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 0, 0.5, -3),
 		Size = UDim2.fromOffset(6, 6),
 		BorderSizePixel = 0
 	}, self.StatusFrame)
-	round(self.StatusDot, 6)
+	Lyra.Round(self.StatusDot, 6)
 	self:_paint(self.StatusDot, {BackgroundColor3 = "Accent"})
 
 	self.StatusText = self:_text(self.StatusFrame, o.Status or "Ready.", 11, "Muted")
@@ -2486,8 +2507,7 @@ function Window:_build()
 	self.StatusText.TextWrapped = true
 	self.StatusText.TextTruncate = Enum.TextTruncate.None
 
-	-- Floating button: a transparent hit area holding a centred face, so the face can scale around its centre.
-	self.Orb = new("TextButton", {
+	self.Orb = Lyra.Inst("TextButton", {
 		Name = "FloatingButton",
 		Size = UDim2.fromOffset(52, 52),
 		Position = UDim2.new(1, -68, 0.5, -26),
@@ -2498,17 +2518,17 @@ function Window:_build()
 		Visible = false
 	}, self.Surface)
 
-	self.OrbFace = new("Frame", {
+	self.OrbFace = Lyra.Inst("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromScale(1, 1),
 		BorderSizePixel = 0
 	}, self.Orb)
 	self:_paint(self.OrbFace, {BackgroundColor3 = "AccentDark"})
-	round(self.OrbFace, 18)
+	Lyra.Round(self.OrbFace, 18)
 	self:_stroke(self.OrbFace, 0.15, "Accent")
 
-	self.OrbScale = new("UIScale", {Scale = 1}, self.OrbFace)
+	self.OrbScale = Lyra.Inst("UIScale", {Scale = 1}, self.OrbFace)
 	self:_brandMark(self.OrbFace, 18, 20)
 
 	self:_on(self.Orb.Activated, function()
@@ -2517,7 +2537,7 @@ function Window:_build()
 		end
 	end)
 
-	self.Blur = new("BlurEffect", {
+	self.Blur = Lyra.Inst("BlurEffect", {
 		Name = "LyraUI_Blur_" .. self.Name,
 		Size = 0,
 		Enabled = true
@@ -2551,7 +2571,6 @@ function Window:_build()
 		self:_layout(false)
 	end)
 
-	-- The sheen follows the camera a little, like light moving across glass.
 	local elapsed = 0
 	self:_connect(RunService.RenderStepped, function(dt)
 		if not self.Visible or self.Minimized or self.Settings.LowEffects or self.Settings.ReducedMotion then
@@ -2572,10 +2591,12 @@ function Window:_build()
 
 	self:_inputs()
 	self:_layout(true)
+	Animation.Apply(self.Theme, self.Main)
 
 	task.defer(function()
 		if self.Alive then
 			self:_layout(true)
+			Animation.Apply(self.Theme, self.Main)
 		end
 	end)
 
@@ -2605,12 +2626,11 @@ function Window:_toastTheme()
 	}
 end
 
--- Drag the window by its header (not over the buttons) or the floating button anywhere.
 function Window:_drag(handle, target, orb)
 	local dragging, touch, start, origin, moved
 
 	self:_on(handle.InputBegan, function(input)
-		if not isPointer(input) then
+		if not Lyra.IsPointer(input) then
 			return
 		end
 		local scale = self.CurrentScale or 1
@@ -2622,7 +2642,6 @@ function Window:_drag(handle, target, orb)
 			return
 		end
 
-		-- Stop any layout animation on the window so it doesn't fight the drag.
 		if not orb then
 			self:_stopTween(self.Main)
 		end
@@ -2674,9 +2693,8 @@ function Window:_drag(handle, target, orb)
 	end)
 end
 
--- Bottom-right grip: drag to resize the window live. The size is remembered.
 function Window:_buildGrip()
-	local grip = new("TextButton", {
+	local grip = Lyra.Inst("TextButton", {
 		Name = "ResizeGrip",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -7, 1, -7),
@@ -2688,11 +2706,10 @@ function Window:_buildGrip()
 		ZIndex = 30
 	}, self.Main)
 	self:_paint(grip, {BackgroundColor3 = "Raised"})
-	round(grip, 10)
+	Lyra.Round(grip, 10)
 
-	-- Three diagonal strokes, the usual "resize corner" mark.
 	for i, length in ipairs({16, 10, 4}) do
-		local stroke = new("Frame", {
+		local stroke = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromOffset(14 + (i - 1) * 3.6, 14 + (i - 1) * 3.6),
 			Size = UDim2.fromOffset(length, 2),
@@ -2701,19 +2718,18 @@ function Window:_buildGrip()
 			ZIndex = 31
 		}, grip)
 		self:_paint(stroke, {BackgroundColor3 = "Accent"})
-		round(stroke, 2)
+		Lyra.Round(stroke, 2)
 	end
 
 	self.ResizeGrip = grip
 
-	-- Small badge with the live size, shown near the grip while dragging.
-	self.SizeBadge = new("TextLabel", {
+	self.SizeBadge = Lyra.Inst("TextLabel", {
 		AnchorPoint = Vector2.new(1, 1),
 		Size = UDim2.fromOffset(96, 26),
 		BackgroundTransparency = 1,
 		TextTransparency = 1,
 		Font = Lyra.Font.Bold,
-		TextSize = textSize(12),
+		TextSize = Lyra.TextSize(12),
 		Text = "",
 		BorderSizePixel = 0,
 		ZIndex = 60
@@ -2722,7 +2738,7 @@ function Window:_buildGrip()
 		BackgroundColor3 = "Base",
 		TextColor3 = "Text"
 	})
-	round(self.SizeBadge, 9)
+	Lyra.Round(self.SizeBadge, 9)
 
 	local badgeStroke = self:_stroke(self.SizeBadge, 1, "Accent")
 	local s = self.Settings
@@ -2745,7 +2761,7 @@ function Window:_buildGrip()
 	local active, touch, start, startW, startH
 
 	self:_on(grip.InputBegan, function(input)
-		if not isPointer(input) then
+		if not Lyra.IsPointer(input) then
 			return
 		end
 		active = true
@@ -2798,14 +2814,12 @@ function Window:_buildGrip()
 	end)
 end
 
--- Window geometry. The window is sized in unscaled pixels and UIScale shrinks or grows it.
 function Window:_scale()
 	local percent = self.Settings.Scale
 	if percent and percent > 0 then
 		return percent / 100
 	end
 	local size = self.Surface and self.Surface.AbsoluteSize or Vector2.new(1280, 720)
-	-- Auto: a touch smaller on phones, where every pixel of the game view matters.
 	return math.min(size.X, size.Y) < 500 and 0.94 or 1
 end
 
@@ -2823,7 +2837,6 @@ function Window:_layout(center)
 	local scaleChanged = self.CurrentScale ~= nil and self.CurrentScale ~= scale
 	self.CurrentScale = scale
 
-	-- Motion: 0.25 s for settings and resets, a light 0.08 s smoothing while the corner grip is dragged.
 	local motion = self.Resizing and 0.08 or 0.25
 	if self.Visible and (scaleChanged or (self.WindowScale.Scale ~= scale and not self.ShowingTo)) then
 		self:_tween(self.WindowScale, {Scale = scale}, motion)
@@ -2852,12 +2865,10 @@ function Window:_layout(center)
 	local minimized = self.Minimized
 	local visualW, visualH = w * scale, (minimized and HEADER or h) * scale
 
-	-- While the window flies open, lay it out around where it is landing, not where it is right now.
 	local pos = self.ShowingTo or self.Main.Position
 	local x = center and (size.X - visualW) / 2 or pos.X.Offset
 	local y = center and (size.Y - visualH) / 2 or pos.Y.Offset
 
-	-- Size and position animate together, so a reset glides back to the centre.
 	local goal = {
 		Size = UDim2.fromOffset(w, minimized and HEADER or h),
 		Position = UDim2.fromOffset(
@@ -2878,7 +2889,6 @@ function Window:_layout(center)
 	self.ContentBack.Visible = not minimized
 	self.ResizeGrip.Visible = not minimized and not self.Maximized
 
-	-- The content area slides with the side rail instead of jumping when the rail changes width.
 	self:_tween(self.ContentBack, {
 		Position = UDim2.fromOffset(left, HEADER + 6),
 		Size = UDim2.new(1, -left - 10, 1, -(HEADER + 6 + 40))
@@ -2907,7 +2917,7 @@ function Window:_layout(center)
 
 	self.MenuButton.Root.Visible = narrow
 	self.Logo.Visible = not narrow
-	self.HeaderTitle.TextSize = textSize(narrow and 14 or 16)
+	self.HeaderTitle.TextSize = Lyra.TextSize(narrow and 14 or 16)
 
 	local mini = rail == 60
 	self:_navLabels(not mini, not lowHeight)
@@ -2956,11 +2966,10 @@ function Window:_layout(center)
 	local key = tostring(narrow) .. tostring(compact) .. tostring(lowHeight)
 	if key ~= self.LayoutKey then
 		self.LayoutKey = key
-		runHooks(self.LayoutHooks, state)
+		Lyra.RunHooks(self.LayoutHooks, state)
 	end
 end
 
--- Tab names, the caption and the footer fade in when the rail widens and fade out before it narrows.
 function Window:_navLabels(show, extras)
 	local state = tostring(show) .. tostring(extras)
 	if self.NavLabelState == state then
@@ -2991,7 +3000,6 @@ function Window:_navLabels(show, extras)
 			elseif not label.Visible then
 				label.TextTransparency = 1
 				label.Visible = true
-				-- Wait for the rail to open a little before the text appears.
 				task.delay(reduced and 0 or 0.08, function()
 					if self.Alive and generation == self.NavLabelGeneration then
 						self:_tween(label, {TextTransparency = 0}, 0.22)
@@ -3022,10 +3030,6 @@ function Window:_effects(keepOrb)
 	self.Main.BackgroundTransparency = s.LowEffects and 0 or 0.16
 	self.ContentBack.BackgroundTransparency = s.LowEffects and 0 or 0.56
 end
-
--- -----------------------------------------------------------------------------
--- Open, close and the ways back.
--- -----------------------------------------------------------------------------
 
 function Window:_reopenMethods()
 	local methods = {}
@@ -3062,7 +3066,6 @@ function Window:_reopenText()
 	return "To reopen it, " .. text .. "."
 end
 
--- With the floating button off there is no on-screen way back, so say how to reopen.
 function Window:_hiddenHint()
 	if not self.Settings.FloatingButton then
 		self:Notify({
@@ -3104,8 +3107,6 @@ function Window:Maximize(state)
 	self:_layout(true)
 end
 
--- The close button. With the floating button on there is always a way back. With it off, the window is
--- never hidden without one, and the first hide asks for a confirmation that times out on its own.
 function Window:_closeHub()
 	if not self.Visible then
 		return
@@ -3167,9 +3168,6 @@ function Window:_closeHub()
 	self:Hide()
 end
 
--- Window flight: hiding shrinks the window into the floating button (or, with the button off, into a brand
--- badge at the window's centre that then pops away); showing grows it back out the same way. Only the
--- window's Position and UIScale tween, so its centre glides in a straight line and nothing re-lays out.
 local FLIGHT_TIME, FLIGHT_SCALE = 0.42, 0.06
 
 function Window:_orbCenter()
@@ -3189,7 +3187,7 @@ end
 
 function Window:_flightBadge(point)
 	if not self.Badge then
-		self.Badge = new("Frame", {
+		self.Badge = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Size = UDim2.fromOffset(56, 56),
 			BorderSizePixel = 0,
@@ -3197,10 +3195,10 @@ function Window:_flightBadge(point)
 			ZIndex = 80
 		}, self.Surface)
 		self:_paint(self.Badge, {BackgroundColor3 = "AccentDark"})
-		round(self.Badge, 18)
+		Lyra.Round(self.Badge, 18)
 		self:_stroke(self.Badge, 0.15, "Accent")
 		self:_brandMark(self.Badge, 18, 20)
-		self.BadgeScale = new("UIScale", {Scale = 0}, self.Badge)
+		self.BadgeScale = Lyra.Inst("UIScale", {Scale = 0}, self.Badge)
 	end
 	self.Badge.Position = UDim2.fromOffset(point.X, point.Y)
 	return self.Badge
@@ -3208,7 +3206,6 @@ end
 
 function Window:SetVisible(value)
 	value = value ~= false
-	-- Opening an open window or closing a closed one does nothing, so a second call never strands the badge.
 	if value == self.Visible or not self.Alive then
 		return
 	end
@@ -3256,7 +3253,6 @@ function Window:SetVisible(value)
 		end)
 
 		if self.Main.Visible then
-			-- Reopened mid-flight: turn around from wherever the window is.
 			self:_tween(self.Main, {Position = home}, FLIGHT_TIME * 0.7)
 			self:_tween(self.WindowScale, {Scale = scale}, FLIGHT_TIME * 0.7)
 		else
@@ -3311,7 +3307,6 @@ function Window:SetVisible(value)
 	local point = useOrb and self:_orbCenter() or self:_windowCenter(home, scale)
 
 	if useOrb then
-		-- The button appears first, then swells as the window lands inside it.
 		self.Orb.Visible = true
 		self.OrbScale.Scale = 0.7
 		self:_tween(self.OrbScale, {Scale = 1}, 0.24)
@@ -3344,8 +3339,6 @@ function Window:SetVisible(value)
 	self:_effects(true)
 end
 
--- Reopen by opening and closing the Roblox menu 3 times within 5 seconds. Only a hidden window reacts, and a
--- notice explains it, so a player who did it by accident learns how to turn it off.
 function Window:_watchMenu()
 	local stamps, openedAt = {}, nil
 
@@ -3353,7 +3346,6 @@ function Window:_watchMenu()
 		openedAt = (not self.Visible and self.Settings.MenuReopen) and os.clock() or nil
 	end)
 
-	-- A close only counts when its open was seen while the window was hidden and the shortcut was on.
 	self:_connect(GuiService.MenuClosed, function()
 		local opened = openedAt
 		openedAt = nil
@@ -3403,7 +3395,6 @@ function Window:_setupChat()
 	self.ChatCommandName = command:lower():gsub("^/e%s+", ""):gsub("^/", ""):gsub("%s+", "")
 	self.ChatAlias = "/" .. self.ChatCommandName
 
-	-- Some accounts cannot chat; then the chat command is not offered as a way to reopen the window.
 	task.spawn(function()
 		local ok, can = pcall(function()
 			return game:GetService("TextChatService"):CanUserChatAsync(LocalPlayer.UserId)
@@ -3421,7 +3412,7 @@ end
 function Window:_chatCommandInstance(name)
 	pcall(function()
 		local service = game:GetService("TextChatService")
-		local item = new("TextChatCommand", {
+		local item = Lyra.Inst("TextChatCommand", {
 			Name = "LyraUI_" .. name,
 			PrimaryAlias = "/" .. name
 		}, service)
@@ -3455,7 +3446,6 @@ function Window:_chat(message)
 		return
 	end
 
-	-- The same message can arrive through more than one chat event; act on it once.
 	if self.LastChat == text and os.clock() - (self.LastChatAt or 0) < 1 then
 		return
 	end
@@ -3468,7 +3458,6 @@ function Window:_chat(message)
 	end
 end
 
--- Window:Command("next", function(args) end) runs on "/next" or "/e next" typed by the local player.
 function Window:Command(name, callback)
 	name = tostring(name):lower():gsub("^/", "")
 	self.Commands[name] = callback
@@ -3513,7 +3502,6 @@ function Window:_inputs()
 
 		pcall(function()
 			local service = game:GetService("TextChatService")
-			-- "/e name" is handled by Roblox's emote command, so it never reaches the chat window.
 			pcall(function()
 				local commands = service:FindFirstChild("TextChatCommands")
 				local emote = commands and commands:FindFirstChild("RBXEmoteCommand")
@@ -3536,10 +3524,6 @@ function Window:_inputs()
 		self:_chatCommandInstance(self.ChatCommandName)
 	end
 end
-
--- -----------------------------------------------------------------------------
--- Status line, notifications and the confirmation dialog.
--- -----------------------------------------------------------------------------
 
 function Window:Status(message, kind)
 	kind = STATUS_KEYS[kind] and kind or "info"
@@ -3568,7 +3552,7 @@ function Window:Notify(spec)
 end
 
 function Window:_buildModal()
-	self.Modal = new("Frame", {
+	self.Modal = Lyra.Inst("Frame", {
 		Name = "Dialog",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Color3.new(0, 0, 0),
@@ -3578,16 +3562,16 @@ function Window:_buildModal()
 		Active = true
 	}, self.Main)
 
-	local card = new("Frame", {
+	local card = Lyra.Inst("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.new(1, -48, 0, 224),
 		BorderSizePixel = 0
 	}, self.Modal)
 	self:_paint(card, {BackgroundColor3 = "Card"})
-	round(card, 18)
+	Lyra.Round(card, 18)
 	self:_stroke(card, 0.1)
-	new("UISizeConstraint", {MaxSize = Vector2.new(440, 224)}, card)
+	Lyra.Inst("UISizeConstraint", {MaxSize = Vector2.new(440, 224)}, card)
 
 	self.ModalTitle = self:_text(card, "", 18, "Text", true)
 	self.ModalTitle.Position = UDim2.fromOffset(18, 20)
@@ -3621,8 +3605,6 @@ function Window:_buildModal()
 	self.ModalConfirm.Root.Size = UDim2.new(0.5, -22, 0, 44)
 end
 
--- Window:Confirm({Title, Text, Confirm = "Confirm", Cancel = "Cancel", Seconds = nil, Callback, OnCancel})
--- or Window:Confirm(title, text, callback). Seconds closes it as a Cancel after that long, counting down on the button.
 function Window:Confirm(spec, text, callback)
 	if type(spec) ~= "table" then
 		spec = {Title = spec, Text = text, Callback = callback}
@@ -3666,19 +3648,15 @@ function Window:Confirm(spec, text, callback)
 	end)
 end
 
--- -----------------------------------------------------------------------------
--- Dropdown: the list floats above the window so no scrolling container clips it; tapping outside closes it.
--- -----------------------------------------------------------------------------
-
 function Window:_dropdown(parent, options, get, set, placeholder)
-	local button = new("TextButton", {
+	local button = Lyra.Inst("TextButton", {
 		Size = UDim2.new(1, 0, 0, 40),
 		Text = "",
 		AutoButtonColor = false,
 		BorderSizePixel = 0
 	}, parent)
 	self:_paint(button, {BackgroundColor3 = "Raised"})
-	round(button, 12)
+	Lyra.Round(button, 12)
 
 	local stroke = self:_stroke(button, 0.6)
 	local label = self:_text(button, "", 12, "Text", true)
@@ -3698,7 +3676,7 @@ function Window:_dropdown(parent, options, get, set, placeholder)
 	}
 
 	function drop.refresh()
-		label.Text = labelFor(drop.Options, get()) or placeholder or "Select…"
+		label.Text = Lyra.LabelFor(drop.Options, get()) or placeholder or "Select…"
 	end
 
 	self:_on(button.Activated, function()
@@ -3727,7 +3705,7 @@ function Window:_openDropdown(drop)
 	self:_closeDropdown(true)
 
 	if not self.DropLayer then
-		self.DropLayer = new("Frame", {
+		self.DropLayer = Lyra.Inst("Frame", {
 			Name = "DropdownLayer",
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
@@ -3735,7 +3713,7 @@ function Window:_openDropdown(drop)
 			Visible = false
 		}, self.Main)
 
-		local catcher = new("TextButton", {
+		local catcher = Lyra.Inst("TextButton", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			Text = "",
@@ -3747,7 +3725,6 @@ function Window:_openDropdown(drop)
 		end)
 	end
 
-	-- Children of the window are laid out before its UIScale, so absolute pixels are divided by it.
 	local scale = self.WindowScale.Scale > 0 and self.WindowScale.Scale or 1
 	local at = (drop.Root.AbsolutePosition - self.Main.AbsolutePosition) / scale
 	local buttonSize = drop.Root.AbsoluteSize / scale
@@ -3762,17 +3739,17 @@ function Window:_openDropdown(drop)
 	local x = math.clamp(at.X + buttonSize.X - width, 8, math.max(8, area.X - width - 8))
 	local y = up and math.max(8, at.Y - height - 6) or below
 
-	local panel = new("CanvasGroup", {
+	local panel = Lyra.Inst("CanvasGroup", {
 		Position = UDim2.fromOffset(x, y + (up and 6 or -6)),
 		Size = UDim2.fromOffset(width, height),
 		BorderSizePixel = 0,
 		GroupTransparency = 1
 	}, self.DropLayer)
 	self:_paint(panel, {BackgroundColor3 = "Card"})
-	round(panel, 12)
+	Lyra.Round(panel, 12)
 	self:_stroke(panel, 0.45, "Accent")
 
-	local scroll = new("ScrollingFrame", {
+	local scroll = Lyra.Inst("ScrollingFrame", {
 		Position = UDim2.fromOffset(4, 4),
 		Size = UDim2.new(1, -8, 1, -8),
 		BackgroundTransparency = 1,
@@ -3786,7 +3763,7 @@ function Window:_openDropdown(drop)
 	local current = drop.Get()
 	for index, option in ipairs(drop.Options) do
 		local selected = option.Value == current
-		local row = new("TextButton", {
+		local row = Lyra.Inst("TextButton", {
 			Position = UDim2.fromOffset(0, (index - 1) * rowHeight),
 			Size = UDim2.new(1, 0, 0, rowHeight - 2),
 			Text = "",
@@ -3795,7 +3772,7 @@ function Window:_openDropdown(drop)
 			BorderSizePixel = 0
 		}, scroll)
 		self:_paint(row, {BackgroundColor3 = "AccentDark"})
-		round(row, 9)
+		Lyra.Round(row, 9)
 
 		local text = self:_text(row, option.Label, 12, selected and "Text" or "Muted", selected)
 		text.Position = UDim2.fromOffset(10, 0)
@@ -3869,10 +3846,6 @@ function Window:_closeDropdown(instant)
 	end)
 end
 
--- -----------------------------------------------------------------------------
--- Tabs
--- -----------------------------------------------------------------------------
-
 local function newContainer(window, frame, page)
 	return setmetatable({
 		Window = window,
@@ -3882,7 +3855,6 @@ local function newContainer(window, frame, page)
 	}, Container)
 end
 
--- Window:Tab({Title = "Home", Icon = "user", OnSelect = fn}) or Window:Tab("Home", "user")
 function Window:Tab(spec, icon)
 	if type(spec) ~= "table" then
 		spec = {Title = spec, Icon = icon}
@@ -3890,7 +3862,7 @@ function Window:Tab(spec, icon)
 
 	local title = tostring(spec.Title or spec.Name or ("Tab " .. tostring(#self.Tabs + 1)))
 
-	local page = new("ScrollingFrame", {
+	local page = Lyra.Inst("ScrollingFrame", {
 		Name = title,
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
@@ -3903,10 +3875,9 @@ function Window:Tab(spec, icon)
 		ClipsDescendants = true
 	}, self.Content)
 	self:_paint(page, {ScrollBarImageColor3 = "AccentDark"})
-	padding(page, 2, 6, 10, 2)
-	list(page, spec.Gap or 8)
+	Lyra.Padding(page, 2, 6, 10, 2)
+	Lyra.ListLayout(page, spec.Gap or 8)
 
-	-- An open dropdown list would drift away from its button, so scrolling closes it.
 	self:_on(page:GetPropertyChangedSignal("CanvasPosition"), function()
 		if self.OpenDrop then
 			self:_closeDropdown()
@@ -3917,7 +3888,7 @@ function Window:Tab(spec, icon)
 	tab.Title, tab.Icon, tab.OnSelect = title, spec.Icon or "box", spec.OnSelect
 
 	local index = #self.Tabs + 1
-	local button = new("TextButton", {
+	local button = Lyra.Inst("TextButton", {
 		Position = UDim2.fromOffset(6, 42 + (index - 1) * 54),
 		Size = UDim2.new(1, -12, 0, 48),
 		Text = "",
@@ -3926,7 +3897,7 @@ function Window:Tab(spec, icon)
 		BorderSizePixel = 0
 	}, self.Nav)
 	self:_paint(button, {BackgroundColor3 = "Raised"})
-	round(button, 12)
+	Lyra.Round(button, 12)
 
 	local mini = self.LastMini == true
 	local iconRoot = self:_icon(button, tab.Icon, UDim2.new(0, mini and 13 or 11, 0.5, -12), "Accent")
@@ -3936,14 +3907,14 @@ function Window:Tab(spec, icon)
 	label.Size = UDim2.new(1, -48, 1, 0)
 	label.Visible = self.NavShow ~= false
 
-	local marker = new("Frame", {
+	local marker = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 0, 0.5, -9),
 		Size = UDim2.fromOffset(3, 18),
 		BorderSizePixel = 0,
 		Visible = false
 	}, button)
 	self:_paint(marker, {BackgroundColor3 = "Accent"})
-	round(marker, 3)
+	Lyra.Round(marker, 3)
 
 	tab.RailButton = {
 		Root = button,
@@ -4038,7 +4009,6 @@ function Window:ResetSize()
 	self:_layout(true)
 end
 
--- Keeps the built-in settings controls in step with a setting changed somewhere else.
 function Window:_syncSetting(key)
 	local control = self.SettingControls[key]
 	if control then
@@ -4094,35 +4064,12 @@ function Window:Destroy()
 	end
 end
 
--- =============================================================================
--- ELEMENTS
--- =============================================================================
--- Every tab, group, column and collapsible section is a Container with the same element methods.
--- Elements return an object with Root, SetVisible and Destroy, plus Set/Get when they hold a value.
--- Spec.Flag stores the value in the config file and restores it on the next run (the callback then runs once).
-
-local function decimals(step)
-	local text = tostring(step)
-	local dot = text:find("%.")
-	return dot and math.min(6, #text - dot) or 0
-end
-
-local function snap(value, step, min)
-	local snapped = min + math.floor((value - min) / step + 0.5) * step
-	return tonumber(string.format("%." .. decimals(step) .. "f", snapped))
-end
-
-local function escape(text)
-	return (tostring(text):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
-end
-
 function Container:_add(item)
 	self.Order = self.Order + 1
 	item.LayoutOrder = self.Order
 	return item
 end
 
--- Selects this tab (tabs only).
 function Container:Select()
 	if self.RailButton then
 		self.Window:SelectTab(self)
@@ -4132,7 +4079,6 @@ end
 function Container:SetVisible(visible)
 	visible = visible ~= false
 	if self.RailButton then
-		-- A hidden tab leaves the rail; if it was open, the first visible tab opens instead.
 		self.Hidden = not visible
 		local window = self.Window
 		window:_layout(false)
@@ -4163,12 +4109,12 @@ function Container:Section(title, description)
 	end
 
 	local window = self.Window
-	local frame = self:_add(new("Frame", {
+	local frame = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, description and 50 or 26),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, self.Frame))
-	padding(frame, 2, 0, description and 4 or 0, 0)
+	Lyra.Padding(frame, 2, 0, description and 4 or 0, 0)
 
 	local label = window:_text(frame, title or "", 17, "Text", true)
 	label.Size = UDim2.new(1, 0, 0, 24)
@@ -4225,7 +4171,6 @@ function Container:Paragraph(text, options)
 	return object
 end
 
--- One muted line, handy for counters ("12 items").
 function Container:Label(text, color)
 	local window = self.Window
 	local label = self:_add(window:_text(self.Frame, text or "", 11, color or "Muted"))
@@ -4243,7 +4188,7 @@ function Container:Label(text, color)
 end
 
 function Container:Divider()
-	local line = self:_add(new("Frame", {
+	local line = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 1),
 		BackgroundTransparency = 0.6,
 		BorderSizePixel = 0
@@ -4266,11 +4211,10 @@ function Container:Button(spec, callback)
 	return button
 end
 
--- Buttons side by side with equal widths. On narrow windows they drop their icons so each label fits.
 function Container:ButtonRow(buttons, options)
 	options = options or {}
 	local window = self.Window
-	local frame = self:_add(new("Frame", {
+	local frame = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, options.Height or 40),
 		BackgroundTransparency = 1
 	}, self.Frame))
@@ -4285,7 +4229,7 @@ function Container:ButtonRow(buttons, options)
 		table.insert(roots, button.Root)
 	end
 
-	spread(roots, options.Gap or 8)
+	Lyra.Spread(roots, options.Gap or 8)
 
 	window:_onLayout(frame, function(state)
 		for _, button in ipairs(items) do
@@ -4298,12 +4242,11 @@ function Container:ButtonRow(buttons, options)
 	return element(frame, {Buttons = items})
 end
 
--- A settings card with a button on the right.
 function Container:Action(spec)
 	spec = spec or {}
 	local window = self.Window
 	local text = tostring(spec.Button or "Run")
-	local width = spec.Width or math.max(96, math.ceil(measure(text, textSize(13), Lyra.Font.Bold).X) + (spec.Icon and 56 or 30))
+	local width = spec.Width or math.max(96, math.ceil(Lyra.Measure(text, Lyra.TextSize(13), Lyra.Font.Bold).X) + (spec.Icon and 56 or 30))
 
 	local card = self:_add((window:_controlCard(self.Frame, spec.Title or "Action", spec.Description, width)))
 	local button = window:_button(card, text, spec.Primary, spec.Callback, spec.Icon)
@@ -4320,21 +4263,21 @@ function Container:Toggle(spec)
 	value = value == true
 
 	local card = self:_add((window:_controlCard(self.Frame, spec.Title or "Toggle", spec.Description, 58)))
-	local switch = new("TextButton", {
+	local switch = Lyra.Inst("TextButton", {
 		Position = UDim2.new(1, -62, 0.5, -15),
 		Size = UDim2.fromOffset(50, 30),
 		Text = "",
 		AutoButtonColor = false,
 		BorderSizePixel = 0
 	}, card)
-	round(switch, 30)
+	Lyra.Round(switch, 30)
 
-	local knob = new("Frame", {
+	local knob = Lyra.Inst("Frame", {
 		Position = UDim2.fromOffset(4, 4),
 		Size = UDim2.fromOffset(22, 22),
 		BorderSizePixel = 0
 	}, switch)
-	round(knob, 22)
+	Lyra.Round(knob, 22)
 
 	local object = element(card, {
 		Flag = spec.Flag,
@@ -4386,33 +4329,17 @@ function Container:Toggle(spec)
 	return object
 end
 
-local function stepValues(spec)
-	if type(spec.Values) == "table" and #spec.Values > 0 then
-		return spec.Values
-	end
-	local min, max, step = tonumber(spec.Min) or 0, tonumber(spec.Max) or 10, tonumber(spec.Step) or 1
-	if step <= 0 then
-		step = 1
-	end
-	local values = {}
-	for i = 0, math.clamp(math.floor((max - min) / step + 0.5), 0, 1000) do
-		table.insert(values, snap(min + i * step, step, min))
-	end
-	return values
-end
-
--- Minus / value / plus. Values = {…} or Min, Max and Step.
 function Container:Stepper(spec)
 	spec = spec or {}
 	local window = self.Window
-	local values = stepValues(spec)
+	local values = Lyra.StepValues(spec)
 	local format = spec.Format or function(v)
 		return tostring(v) .. (spec.Suffix or "")
 	end
 	local value, restored = window:_initial(spec, spec.Default or values[1])
 
 	local card = self:_add((window:_controlCard(self.Frame, spec.Title or "Stepper", spec.Description, 140)))
-	local box = new("Frame", {
+	local box = Lyra.Inst("Frame", {
 		Size = UDim2.fromOffset(140, 38),
 		Position = UDim2.new(1, -152, 0.5, -19),
 		BackgroundTransparency = 1
@@ -4475,7 +4402,6 @@ function Container:Stepper(spec)
 	return object
 end
 
--- A track with a knob. Drag or tap anywhere on the track.
 function Container:Slider(spec)
 	spec = spec or {}
 	local window, container = self.Window, self
@@ -4490,10 +4416,10 @@ function Container:Slider(spec)
 	local format = spec.Format or function(v)
 		return tostring(v) .. (spec.Suffix or "")
 	end
-	local value, restored = window:_initial(spec, snap(math.clamp(tonumber(spec.Default) or min, min, max), step, min))
+	local value, restored = window:_initial(spec, Lyra.Snap(math.clamp(tonumber(spec.Default) or min, min, max), step, min))
 
 	local card = self:_add((window:_controlCard(self.Frame, spec.Title or "Slider", spec.Description, 176)))
-	local holder = new("Frame", {
+	local holder = Lyra.Inst("Frame", {
 		Size = UDim2.fromOffset(176, 38),
 		Position = UDim2.new(1, -188, 0.5, -19),
 		BackgroundTransparency = 1
@@ -4503,32 +4429,32 @@ function Container:Slider(spec)
 	label.Size = UDim2.new(0, 52, 1, 0)
 	label.TextXAlignment = Enum.TextXAlignment.Center
 
-	local track = new("Frame", {
+	local track = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 64, 0.5, -3),
 		Size = UDim2.new(1, -74, 0, 6),
 		BorderSizePixel = 0
 	}, holder)
 	window:_paint(track, {BackgroundColor3 = "Raised"})
-	round(track, 3)
+	Lyra.Round(track, 3)
 
-	local fill = new("Frame", {
+	local fill = Lyra.Inst("Frame", {
 		Size = UDim2.fromScale(0, 1),
 		BorderSizePixel = 0
 	}, track)
 	window:_paint(fill, {BackgroundColor3 = "Accent"})
-	round(fill, 3)
+	Lyra.Round(fill, 3)
 
-	local knob = new("Frame", {
+	local knob = Lyra.Inst("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0, 0.5),
 		Size = UDim2.fromOffset(18, 18),
 		BorderSizePixel = 0
 	}, track)
 	window:_paint(knob, {BackgroundColor3 = "Text"})
-	round(knob, 9)
+	Lyra.Round(knob, 9)
 	window:_stroke(knob, 0.1, "AccentDark")
 
-	local hit = new("TextButton", {
+	local hit = Lyra.Inst("TextButton", {
 		Position = UDim2.fromOffset(56, 0),
 		Size = UDim2.new(1, -56, 1, 0),
 		BackgroundTransparency = 1,
@@ -4546,7 +4472,7 @@ function Container:Slider(spec)
 	end
 
 	function object:Set(newValue, silent)
-		newValue = snap(math.clamp(tonumber(newValue) or min, min, max), step, min)
+		newValue = Lyra.Snap(math.clamp(tonumber(newValue) or min, min, max), step, min)
 		if newValue == value then
 			return
 		end
@@ -4572,7 +4498,7 @@ function Container:Slider(spec)
 	end
 
 	window:_on(hit.InputBegan, function(input)
-		if not isPointer(input) then
+		if not Lyra.IsPointer(input) then
 			return
 		end
 		dragging = true
@@ -4615,11 +4541,10 @@ function Container:Slider(spec)
 	return object
 end
 
--- With a Title it is a settings card with the picker on the right; without one, a full-width picker.
 function Container:Dropdown(spec)
 	spec = spec or {}
 	local window = self.Window
-	local options = normalizeOptions(spec.Options)
+	local options = Lyra.NormalizeOptions(spec.Options)
 	local default = spec.Default
 	if default == nil and spec.Placeholder == nil and options[1] then
 		default = options[1].Value
@@ -4661,9 +4586,9 @@ function Container:Dropdown(spec)
 	end
 
 	function object:SetOptions(newOptions, keepValue)
-		options = normalizeOptions(newOptions)
+		options = Lyra.NormalizeOptions(newOptions)
 		drop.Options = options
-		if not keepValue and labelFor(options, value) == nil then
+		if not keepValue and Lyra.LabelFor(options, value) == nil then
 			value = options[1] and options[1].Value or nil
 			window:_setFlag(spec.Flag, value)
 		end
@@ -4677,8 +4602,6 @@ function Container:Dropdown(spec)
 	return object
 end
 
--- Text field. Callback(text, enterPressed) runs when it loses focus or its button is pressed;
--- Changed(text) runs while typing (debounced). Button = true adds an arrow button on the right.
 function Container:Input(spec)
 	if type(spec) ~= "table" then
 		spec = {Placeholder = spec}
@@ -4688,12 +4611,12 @@ function Container:Input(spec)
 
 	local root, holder = nil, self.Frame
 	if spec.Title then
-		root = new("Frame", {
+		root = Lyra.Inst("Frame", {
 			Size = UDim2.new(1, 0, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1
 		}, self.Frame)
-		list(root, 6)
+		Lyra.ListLayout(root, 6)
 
 		local title = window:_text(root, spec.Title, 12, "Muted", true)
 		title.Size = UDim2.new(1, 0, 0, 18)
@@ -4711,7 +4634,7 @@ function Container:Input(spec)
 		left = 42
 	end
 
-	local box = new("TextBox", {
+	local box = Lyra.Inst("TextBox", {
 		Position = UDim2.fromOffset(left, 0),
 		Size = UDim2.new(1, -(left + 12 + (spec.Button and 46 or 0)), 1, 0),
 		BackgroundTransparency = 1,
@@ -4807,18 +4730,17 @@ function Container:Input(spec)
 	return object
 end
 
--- Multi-line box (monospace by default). Editable = false makes it a read-only code display.
 function Container:TextArea(spec)
 	spec = spec or {}
 	local window = self.Window
 	local value, restored = window:_initial(spec, tostring(spec.Default or spec.Text or ""))
 
-	local box = self:_add(new("TextBox", {
+	local box = self:_add(Lyra.Inst("TextBox", {
 		Size = UDim2.new(1, 0, 0, spec.Height or 58),
 		BorderSizePixel = 0,
 		Text = value,
 		PlaceholderText = spec.Placeholder or "",
-		TextSize = textSize(12),
+		TextSize = Lyra.TextSize(12),
 		Font = spec.Code == false and Lyra.Font.Regular or Lyra.Font.Code,
 		TextWrapped = true,
 		MultiLine = true,
@@ -4833,8 +4755,8 @@ function Container:TextArea(spec)
 		TextColor3 = "Text",
 		PlaceholderColor3 = "Muted"
 	})
-	round(box, 12)
-	padding(box, 8, 10, 8, 10)
+	Lyra.Round(box, 12)
+	Lyra.Padding(box, 8, 10, 8, 10)
 
 	local object = element(box, {
 		Box = box,
@@ -4858,7 +4780,7 @@ function Container:TextArea(spec)
 	end
 
 	function object:Copy()
-		return copyText(box.Text)
+		return Lyra.CopyText(box.Text)
 	end
 
 	window:_registerFlag(spec.Flag, object)
@@ -4946,11 +4868,10 @@ function Container:Keybind(spec)
 	return object
 end
 
--- A row of pill filters that scrolls sideways. Small = true for a second, lighter row.
 function Container:Chips(spec)
 	spec = spec or {}
 	local window = self.Window
-	local options = normalizeOptions(spec.Options)
+	local options = Lyra.NormalizeOptions(spec.Options)
 	local default = spec.Default
 	if default == nil and options[1] then
 		default = options[1].Value
@@ -4960,7 +4881,7 @@ function Container:Chips(spec)
 	local small = spec.Small == true
 	local height = small and 30 or 34
 
-	local scroll = self:_add(new("ScrollingFrame", {
+	local scroll = self:_add(Lyra.Inst("ScrollingFrame", {
 		Size = UDim2.new(1, 0, 0, height + 2),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -4970,7 +4891,7 @@ function Container:Chips(spec)
 		AutomaticCanvasSize = Enum.AutomaticSize.X,
 		ElasticBehavior = Enum.ElasticBehavior.Never
 	}, self.Frame))
-	list(scroll, 6, Enum.FillDirection.Horizontal)
+	Lyra.ListLayout(scroll, 6, Enum.FillDirection.Horizontal)
 
 	local chips = {}
 	local object = element(scroll, {Flag = spec.Flag})
@@ -4992,18 +4913,18 @@ function Container:Chips(spec)
 		chips = {}
 
 		for index, option in ipairs(options) do
-			local chip = new("TextButton", {
+			local chip = Lyra.Inst("TextButton", {
 				LayoutOrder = index,
 				Size = UDim2.fromOffset(0, height),
 				AutomaticSize = Enum.AutomaticSize.X,
 				Text = option.Label,
 				Font = Lyra.Font.Bold,
-				TextSize = textSize(small and 11 or 12),
+				TextSize = Lyra.TextSize(small and 11 or 12),
 				AutoButtonColor = false,
 				BorderSizePixel = 0
 			}, scroll)
-			round(chip, height / 2)
-			padding(chip, 0, small and 12 or 14, 0, small and 12 or 14)
+			Lyra.Round(chip, height / 2)
+			Lyra.Padding(chip, 0, small and 12 or 14, 0, small and 12 or 14)
 
 			table.insert(chips, {
 				Root = chip,
@@ -5034,8 +4955,8 @@ function Container:Chips(spec)
 	end
 
 	function object:SetOptions(newOptions)
-		options = normalizeOptions(newOptions)
-		if labelFor(options, value) == nil then
+		options = Lyra.NormalizeOptions(newOptions)
+		if Lyra.LabelFor(options, value) == nil then
 			value = options[1] and options[1].Value or nil
 		end
 		build()
@@ -5049,18 +4970,17 @@ function Container:Chips(spec)
 	return object
 end
 
--- Two or more buttons that act as tabs inside a page (one is always selected).
 function Container:Segmented(spec)
 	spec = spec or {}
 	local window = self.Window
-	local options = normalizeOptions(spec.Options)
+	local options = Lyra.NormalizeOptions(spec.Options)
 	local default = spec.Default
 	if default == nil and options[1] then
 		default = options[1].Value
 	end
 
 	local value, restored = window:_initial(spec, default)
-	local frame = self:_add(new("Frame", {
+	local frame = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, spec.Height or 44),
 		BackgroundTransparency = 1
 	}, self.Frame))
@@ -5089,7 +5009,7 @@ function Container:Segmented(spec)
 		table.insert(roots, button.Root)
 	end
 
-	spread(roots, spec.Gap or 12)
+	Lyra.Spread(roots, spec.Gap or 12)
 
 	function object:Set(newValue, silent)
 		if newValue == value then
@@ -5115,7 +5035,6 @@ function Container:Segmented(spec)
 	return object
 end
 
--- A card that holds other elements. Title adds a small accent caption on top.
 function Container:Group(spec)
 	if type(spec) ~= "table" then
 		spec = {Title = spec}
@@ -5131,27 +5050,26 @@ function Container:Group(spec)
 	return group
 end
 
--- Two columns side by side that stack on narrow windows. Returns (left, right).
 function Container:Columns(spec)
 	spec = spec or {}
 	local window = self.Window
 	local gap, inner = spec.Gap or 10, spec.InnerGap or 8
 
-	local holder = self:_add(new("Frame", {
+	local holder = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, self.Frame))
-	local layout = list(holder, gap, Enum.FillDirection.Horizontal)
+	local layout = Lyra.ListLayout(holder, gap, Enum.FillDirection.Horizontal)
 
 	local function column(order)
-		local frame = new("Frame", {
+		local frame = Lyra.Inst("Frame", {
 			LayoutOrder = order,
 			Size = UDim2.new(0.5, -math.floor(gap / 2), 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1
 		}, holder)
-		list(frame, inner)
+		Lyra.ListLayout(frame, inner)
 		local item = newContainer(window, frame, self.Page)
 		item.Root = frame
 		return item
@@ -5170,7 +5088,6 @@ function Container:Columns(spec)
 	return left, right
 end
 
--- Options that stay folded until opened (progressive disclosure), so a page starts short.
 function Container:Collapsible(spec)
 	if type(spec) ~= "table" then
 		spec = {Title = spec}
@@ -5179,21 +5096,21 @@ function Container:Collapsible(spec)
 	local closedTitle = spec.Title or "Show advanced options"
 	local openTitle = spec.OpenTitle or (spec.Title and spec.Title or "Hide advanced options")
 
-	local holder = self:_add(new("Frame", {
+	local holder = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, self.Frame))
-	list(holder, 6)
+	Lyra.ListLayout(holder, 6)
 
-	local body = new("Frame", {
+	local body = Lyra.Inst("Frame", {
 		LayoutOrder = 2,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Visible = spec.Open == true
 	}, holder)
-	list(body, spec.Gap or 6)
+	Lyra.ListLayout(body, spec.Gap or 6)
 
 	local section = newContainer(window, body, self.Page)
 	section.Root = holder
@@ -5223,49 +5140,47 @@ function Container:Collapsible(spec)
 	return section
 end
 
--- An underlined "How it works" link that unfolds a short guide.
 function Container:Guide(spec)
 	spec = spec or {}
 	local window = self.Window
 	local closedTitle = spec.Title or "How it works"
 	local openTitle = spec.OpenTitle or ("Hide " .. closedTitle:sub(1, 1):lower() .. closedTitle:sub(2))
 
-	local row = self:_add(new("Frame", {
+	local row = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 24),
 		BackgroundTransparency = 1
 	}, self.Frame))
 
-	local label = new("TextLabel", {
+	local label = Lyra.Inst("TextLabel", {
 		Size = UDim2.new(0, 0, 1, 0),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundTransparency = 1,
 		RichText = true,
-		Text = "<u>" .. escape(closedTitle) .. "</u>",
+		Text = "<u>" .. Lyra.Escape(closedTitle) .. "</u>",
 		Font = Lyra.Font.Bold,
-		TextSize = textSize(12),
+		TextSize = Lyra.TextSize(12),
 		TextXAlignment = Enum.TextXAlignment.Left
 	}, row)
 	window:_paint(label, {TextColor3 = "Accent"})
 
-	local chevrons = new("Frame", {
+	local chevrons = Lyra.Inst("Frame", {
 		Size = UDim2.fromOffset(18, 18),
 		Position = UDim2.new(0, 0, 0.5, -9),
 		BackgroundTransparency = 1
 	}, row)
-	new("UIScale", {Scale = 0.75}, chevrons)
+	Lyra.Inst("UIScale", {Scale = 0.75}, chevrons)
 
 	local down = window:_icon(chevrons, "chevron-down", UDim2.new(), "Accent")
 	local up = window:_icon(chevrons, "chevron-up", UDim2.new(), "Accent")
 	up.Visible = false
 
-	-- The chevron follows the label's measured width.
 	local function place()
 		chevrons.Position = UDim2.new(0, label.AbsoluteSize.X / (window.CurrentScale or 1) + 4, 0.5, -9)
 	end
 	window:_on(label:GetPropertyChangedSignal("AbsoluteSize"), place)
 	task.defer(place)
 
-	local hit = new("TextButton", {
+	local hit = Lyra.Inst("TextButton", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Text = "",
@@ -5290,7 +5205,7 @@ function Container:Guide(spec)
 		card.Visible = open
 		down.Visible = not open
 		up.Visible = open
-		label.Text = "<u>" .. escape(open and openTitle or closedTitle) .. "</u>"
+		label.Text = "<u>" .. Lyra.Escape(open and openTitle or closedTitle) .. "</u>"
 		place()
 	end
 
@@ -5316,11 +5231,6 @@ function Container:Guide(spec)
 	return object
 end
 
--- -----------------------------------------------------------------------------
--- Rows, lists, grids and cards
--- -----------------------------------------------------------------------------
--- One list row: optional number badge, picture or icon, title, subtitle and buttons on the right.
--- Buttons with an icon and a title shrink to the icon on narrow windows.
 function Window:_row(parent, spec, number)
 	local window = self
 	local card = self:_card(parent, 58)
@@ -5329,12 +5239,12 @@ function Window:_row(parent, spec, number)
 	local left = 10
 
 	if number then
-		local badge = new("Frame", {
+		local badge = Lyra.Inst("Frame", {
 			Position = UDim2.fromOffset(9, 15),
 			Size = UDim2.fromOffset(28, 28),
 			BorderSizePixel = 0
 		}, card)
-		round(badge, 9)
+		Lyra.Round(badge, 9)
 		self:_paint(badge, {BackgroundColor3 = spec.Current and "Accent" or "Raised"})
 
 		local digits = self:_text(badge, tostring(number), 12, spec.Current and "Base" or "Text", true)
@@ -5343,7 +5253,7 @@ function Window:_row(parent, spec, number)
 		left = 44
 	end
 
-	local thumb = new("ImageLabel", {
+	local thumb = Lyra.Inst("ImageLabel", {
 		Position = UDim2.fromOffset(left, 9),
 		Size = UDim2.fromOffset(40, 40),
 		BorderSizePixel = 0,
@@ -5352,7 +5262,7 @@ function Window:_row(parent, spec, number)
 		ClipsDescendants = true
 	}, card)
 	self:_paint(thumb, {BackgroundColor3 = "Raised"})
-	round(thumb, 12)
+	Lyra.Round(thumb, 12)
 
 	if spec.Image then
 		thumb.Image = tostring(spec.Image)
@@ -5395,7 +5305,7 @@ function Window:_row(parent, spec, number)
 			local text = tostring(buttonSpec.Title or "")
 			local iconOnly = text == "" or (compact and buttonSpec.Icon ~= nil and buttonSpec.Collapse ~= false)
 			button:SetText(iconOnly and "" or text)
-			local width = buttonSpec.Width or (iconOnly and 40 or math.max(58, math.ceil(measure(text, textSize(13), Lyra.Font.Bold).X) + (buttonSpec.Icon and 52 or 26)))
+			local width = buttonSpec.Width or (iconOnly and 40 or math.max(58, math.ceil(Lyra.Measure(text, Lyra.TextSize(13), Lyra.Font.Bold).X) + (buttonSpec.Icon and 52 or 26)))
 			button.Root.Size = UDim2.fromOffset(width, 38)
 			button.Root.Position = UDim2.new(1, -(x + width), 0.5, -19)
 			x = x + width + 6
@@ -5465,17 +5375,15 @@ function Container:Empty(spec, hint, icon)
 	return element(self:_add(self.Window:_empty(self.Frame, spec.Title, spec.Text or spec.Description, spec.Icon)))
 end
 
--- A list of rows with an empty state. Reorderable = true adds number badges: drag the number or picture of a
--- row to move it (a line marks where it will land and the page scrolls near the edges).
 function Container:List(spec)
 	spec = spec or {}
 	local window, container = self.Window, self
-	local frame = self:_add(new("Frame", {
+	local frame = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, self.Frame))
-	list(frame, 6)
+	Lyra.ListLayout(frame, 6)
 
 	local reorder = spec.Reorderable == true or type(spec.OnReorder) == "function"
 	local object = element(frame, {Items = {}, Rows = {}})
@@ -5491,7 +5399,7 @@ function Container:List(spec)
 		row.Root.LayoutOrder = index
 		row.Index = index
 		if reorder then
-			local grip = new("TextButton", {
+			local grip = Lyra.Inst("TextButton", {
 				Size = UDim2.new(0, 92, 1, 0),
 				BackgroundTransparency = 1,
 				Text = "",
@@ -5499,7 +5407,7 @@ function Container:List(spec)
 				BorderSizePixel = 0
 			}, row.Root)
 			window:_on(grip.InputBegan, function(input)
-				if isPointer(input) then
+				if Lyra.IsPointer(input) then
 					startDrag(row.Index, row.Root, input)
 				end
 			end)
@@ -5546,32 +5454,31 @@ function Container:List(spec)
 		row.BackgroundTransparency = 0.55
 
 		local width = frame.AbsoluteSize.X
-		drag.Line = new("Frame", {
+		drag.Line = Lyra.Inst("Frame", {
 			Size = UDim2.fromOffset(width, 3),
 			BorderSizePixel = 0,
 			ZIndex = 40
 		}, window.Surface)
 		window:_paint(drag.Line, {BackgroundColor3 = "Accent"})
-		round(drag.Line, 2)
+		Lyra.Round(drag.Line, 2)
 
-		drag.Ghost = new("TextLabel", {
+		drag.Ghost = Lyra.Inst("TextLabel", {
 			Size = UDim2.fromOffset(math.max(120, math.min(260, width - 24)), 36),
 			BackgroundTransparency = 0.05,
 			Text = "  " .. tostring(object.Items[index].Title or ""),
 			Font = Lyra.Font.Bold,
-			TextSize = textSize(13),
+			TextSize = Lyra.TextSize(13),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 41,
 			BorderSizePixel = 0
 		}, window.Surface)
 		window:_paint(drag.Ghost, {BackgroundColor3 = "AccentDark", TextColor3 = "Text"})
-		round(drag.Ghost, 10)
+		Lyra.Round(drag.Ghost, 10)
 		window:_stroke(drag.Ghost, 0.2, "Accent")
 
 		local function update(y)
 			local top, surface = frame.AbsolutePosition.Y, window.Surface.AbsolutePosition
-			-- Rows live inside the scaled window, so one step on screen is (row + gap) times the window scale.
 			local step = 64 * (window.CurrentScale or 1)
 			drag.Slot = math.clamp(math.floor((y - top) / step + 0.5), 0, #object.Items)
 			drag.Line.Position = UDim2.fromOffset(frame.AbsolutePosition.X - surface.X, top + drag.Slot * step - 4 - surface.Y)
@@ -5603,7 +5510,6 @@ function Container:List(spec)
 				return
 			end
 			if drag.Slot then
-				-- Slot s is the gap before item s+1 in the original order.
 				local target = math.clamp(drag.Slot >= drag.From and drag.Slot or drag.Slot + 1, 1, #object.Items)
 				if target ~= drag.From then
 					table.insert(object.Items, target, table.remove(object.Items, drag.From))
@@ -5674,25 +5580,22 @@ function Container:List(spec)
 	return object
 end
 
--- A grid of picture cards (shop items, presets, games…). Columns follow the window width.
 function Container:Grid(spec)
 	spec = spec or {}
 	local window = self.Window
 	local cellHeight, minCell = spec.CellHeight or 200, spec.MinWidth or 150
-	local frame = self:_add(new("Frame", {
+	local frame = self:_add(Lyra.Inst("Frame", {
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, self.Frame))
-	local layout = new("UIGridLayout", {
+	local layout = Lyra.Inst("UIGridLayout", {
 		CellSize = UDim2.fromOffset(minCell, cellHeight),
 		CellPadding = UDim2.fromOffset(8, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder
 	}, frame)
 	local object = element(frame, {Cards = {}, Count = 0})
 
-	-- Cells are sized in whole pixels so every column fits the row exactly (scale-based cells could round
-	-- one column onto the next row and leave a gap on the right).
 	local function columns()
 		local scale = window.WindowScale.Scale > 0 and window.WindowScale.Scale or 1
 		local width = math.floor(frame.AbsoluteSize.X / scale)
@@ -5709,16 +5612,16 @@ function Container:Grid(spec)
 	function object:Add(item)
 		item = item or {}
 		object.Count = object.Count + 1
-		local card = new("Frame", {
+		local card = Lyra.Inst("Frame", {
 			LayoutOrder = object.Count,
 			BackgroundTransparency = 0.22,
 			BorderSizePixel = 0
 		}, frame)
 		window:_paint(card, {BackgroundColor3 = "Card"})
-		round(card, 14)
+		Lyra.Round(card, 14)
 		window:_stroke(card, 0.55)
 
-		local thumb = new("TextButton", {
+		local thumb = Lyra.Inst("TextButton", {
 			Position = UDim2.fromOffset(8, 8),
 			Size = UDim2.new(1, -16, 0, 96),
 			Text = "",
@@ -5727,9 +5630,9 @@ function Container:Grid(spec)
 			ClipsDescendants = true
 		}, card)
 		window:_paint(thumb, {BackgroundColor3 = "Raised"})
-		round(thumb, 10)
+		Lyra.Round(thumb, 10)
 
-		local picture = new("ImageLabel", {
+		local picture = Lyra.Inst("ImageLabel", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -5739,7 +5642,7 @@ function Container:Grid(spec)
 
 		if not item.Image and item.Icon then
 			local icon = window:_icon(thumb, item.Icon, UDim2.new(0.5, -12, 0.5, -12), "AccentDark")
-			new("UIScale", {Scale = 1.6}, icon)
+			Lyra.Inst("UIScale", {Scale = 1.6}, icon)
 		end
 
 		if item.Tag then
@@ -5749,12 +5652,11 @@ function Container:Grid(spec)
 			tag.Position = UDim2.fromOffset(6, 6)
 			tag.BackgroundTransparency = 0
 			window:_paint(tag, {BackgroundColor3 = "Accent"})
-			round(tag, 9)
-			padding(tag, 0, 7, 0, 7)
+			Lyra.Round(tag, 9)
+			Lyra.Padding(tag, 0, 7, 0, 7)
 		end
 
-		-- Green check on the picture for items that are selected / owned / worn.
-		local check = new("Frame", {
+		local check = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(1, 0),
 			Position = UDim2.new(1, -6, 0, 6),
 			Size = UDim2.fromOffset(24, 24),
@@ -5762,7 +5664,7 @@ function Container:Grid(spec)
 			Visible = item.Checked == true
 		}, thumb)
 		window:_paint(check, {BackgroundColor3 = "Green"})
-		round(check, 12)
+		Lyra.Round(check, 12)
 		Toast.glyph(check, "check", window.Theme.Base)
 
 		local name = window:_text(card, item.Title or "", 12, "Text", true)
@@ -5829,8 +5731,6 @@ function Container:Grid(spec)
 	return object
 end
 
--- A 3D model viewer: drag to rotate, wheel or buttons to zoom. Pass a model you own (a clone);
--- the preview destroys the previous model when a new one is set.
 function Container:Preview(spec)
 	spec = spec or {}
 	local window, container = self.Window, self
@@ -5841,7 +5741,7 @@ function Container:Preview(spec)
 	tag.Position = UDim2.fromOffset(16, 13)
 	tag.Size = UDim2.new(1, -32, 0, 16)
 
-	local viewport = new("ViewportFrame", {
+	local viewport = Lyra.Inst("ViewportFrame", {
 		Position = UDim2.fromOffset(8, 32),
 		Size = UDim2.new(1, -16, 1, -87),
 		BackgroundTransparency = 1,
@@ -5852,7 +5752,7 @@ function Container:Preview(spec)
 		Visible = false
 	}, card)
 
-	local fallback = new("ImageLabel", {
+	local fallback = Lyra.Inst("ImageLabel", {
 		Position = UDim2.fromOffset(8, 30),
 		Size = UDim2.new(1, -16, 1, -90),
 		BackgroundTransparency = 1,
@@ -5861,18 +5761,18 @@ function Container:Preview(spec)
 		Visible = false
 	}, card)
 
-	local world = new("WorldModel", {}, viewport)
-	local camera = new("Camera", {FieldOfView = 35}, viewport)
+	local world = Lyra.Inst("WorldModel", {}, viewport)
+	local camera = Lyra.Inst("Camera", {FieldOfView = 35}, viewport)
 	viewport.CurrentCamera = camera
 
-	local empty = new("Frame", {
+	local empty = Lyra.Inst("Frame", {
 		Position = UDim2.fromOffset(8, 40),
 		Size = UDim2.new(1, -16, 1, -106),
 		BackgroundTransparency = 1
 	}, card)
 
 	local motif = window:_icon(empty, spec.Icon or "user", UDim2.new(0.5, -12, 0.5, -48), "AccentDark")
-	new("UIScale", {Scale = 1.5}, motif)
+	Lyra.Inst("UIScale", {Scale = 1.5}, motif)
 
 	local defaultHint = spec.Hint or "Nothing to preview yet."
 	local hint = window:_text(empty, defaultHint, 13, "Muted")
@@ -5882,7 +5782,7 @@ function Container:Preview(spec)
 	hint.TextTruncate = Enum.TextTruncate.None
 	hint.TextXAlignment = Enum.TextXAlignment.Center
 
-	local bar = new("Frame", {
+	local bar = Lyra.Inst("Frame", {
 		Position = UDim2.new(0.2, 0, 0.5, 61),
 		Size = UDim2.new(0.6, 0, 0, 3),
 		BackgroundTransparency = 0.6,
@@ -5890,16 +5790,16 @@ function Container:Preview(spec)
 		Visible = false
 	}, empty)
 	window:_paint(bar, {BackgroundColor3 = "AccentDark"})
-	round(bar, 4)
+	Lyra.Round(bar, 4)
 
-	local fill = new("Frame", {
+	local fill = Lyra.Inst("Frame", {
 		Size = UDim2.new(0.2, 0, 1, 0),
 		BorderSizePixel = 0
 	}, bar)
 	window:_paint(fill, {BackgroundColor3 = "Accent"})
-	round(fill, 4)
+	Lyra.Round(fill, 4)
 
-	local controls = new("Frame", {
+	local controls = Lyra.Inst("Frame", {
 		Position = UDim2.new(0, 12, 1, -49),
 		Size = UDim2.new(1, -24, 0, 38),
 		BackgroundTransparency = 1
@@ -6023,7 +5923,7 @@ function Container:Preview(spec)
 
 	local dragging, last, touch
 	window:_on(viewport.InputBegan, function(input)
-		if not isPointer(input) then
+		if not Lyra.IsPointer(input) then
 			return
 		end
 		dragging = true
@@ -6069,7 +5969,6 @@ function Container:Preview(spec)
 	return object
 end
 
--- A strip of thumbnails that scrolls sideways (history, recent items…), with optional buttons underneath.
 function Container:Strip(spec)
 	spec = spec or {}
 	local window = self.Window
@@ -6086,7 +5985,7 @@ function Container:Strip(spec)
 	hint.Size = UDim2.new(0.5, -14, 0, 24)
 	hint.TextXAlignment = Enum.TextXAlignment.Right
 
-	local strip = new("ScrollingFrame", {
+	local strip = Lyra.Inst("ScrollingFrame", {
 		Position = UDim2.fromOffset(8, 40),
 		Size = UDim2.new(1, -16, 0, 66),
 		BackgroundTransparency = 1,
@@ -6098,11 +5997,11 @@ function Container:Strip(spec)
 		ElasticBehavior = Enum.ElasticBehavior.Never
 	}, card)
 	window:_paint(strip, {ScrollBarImageColor3 = "AccentDark"})
-	list(strip, 4, Enum.FillDirection.Horizontal)
+	Lyra.ListLayout(strip, 4, Enum.FillDirection.Horizontal)
 
 	local object = element(card, {Strip = strip, Buttons = {}})
 	if #buttons > 0 then
-		local row = new("Frame", {
+		local row = Lyra.Inst("Frame", {
 			Position = UDim2.new(0, 10, 1, -46),
 			Size = UDim2.new(1, -20, 0, 36),
 			BackgroundTransparency = 1
@@ -6113,7 +6012,7 @@ function Container:Strip(spec)
 			table.insert(object.Buttons, button)
 			table.insert(roots, button.Root)
 		end
-		spread(roots, 8)
+		Lyra.Spread(roots, 8)
 		window:_onLayout(card, function(state)
 			for _, button in ipairs(object.Buttons) do
 				if button.Label.Text ~= "" then
@@ -6136,7 +6035,7 @@ function Container:Strip(spec)
 			return
 		end
 		for index, item in ipairs(items) do
-			local tile = new("TextButton", {
+			local tile = Lyra.Inst("TextButton", {
 				LayoutOrder = index,
 				Size = UDim2.fromOffset(58, 64),
 				BackgroundTransparency = 1,
@@ -6145,18 +6044,18 @@ function Container:Strip(spec)
 				BorderSizePixel = 0
 			}, strip)
 
-			local frame = new("Frame", {
+			local frame = Lyra.Inst("Frame", {
 				Position = UDim2.fromOffset(7, 0),
 				Size = UDim2.fromOffset(44, 44),
 				BorderSizePixel = 0,
 				ClipsDescendants = true
 			}, tile)
 			window:_paint(frame, {BackgroundColor3 = "Raised"})
-			round(frame, 12)
+			Lyra.Round(frame, 12)
 			window:_stroke(frame, item.Current and 0 or 0.6, item.Current and "Accent" or "Line").Thickness = item.Current and 2 or 1
 
 			if item.Image then
-				new("ImageLabel", {
+				Lyra.Inst("ImageLabel", {
 					Size = UDim2.fromScale(1, 1),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
@@ -6185,7 +6084,6 @@ function Container:Strip(spec)
 			end
 		end
 
-		-- Keep the newest item in view.
 		if spec.ScrollToEnd ~= false then
 			task.defer(function()
 				if strip.Parent then
@@ -6203,24 +6101,22 @@ function Container:Strip(spec)
 	return object
 end
 
--- Blue, underlined link (tap to copy) followed by a Copy link button. Without clipboard access the link
--- turns into a selectable text box.
 function Window:_linkBlock(card, order, label, url)
-	local holder = new("Frame", {
+	local holder = Lyra.Inst("Frame", {
 		LayoutOrder = order,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1
 	}, card)
 
-	local link = new("TextButton", {
+	local link = Lyra.Inst("TextButton", {
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		AutoButtonColor = false,
 		RichText = true,
 		Text = "",
-		TextSize = textSize(13),
+		TextSize = Lyra.TextSize(13),
 		Font = Lyra.Font.Regular,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -6228,11 +6124,11 @@ function Window:_linkBlock(card, order, label, url)
 	}, holder)
 
 	self:_onTheme(link, function()
-		link.Text = '<u><font color="' .. hex(self.Theme.Link) .. '">' .. escape(url) .. "</font></u>"
+		link.Text = '<u><font color="' .. Lyra.Hex(self.Theme.Link) .. '">' .. Lyra.Escape(url) .. "</font></u>"
 		link.TextColor3 = self.Theme.Link
 	end)
 
-	local fallback = new("TextBox", {
+	local fallback = Lyra.Inst("TextBox", {
 		Visible = false,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
@@ -6240,7 +6136,7 @@ function Window:_linkBlock(card, order, label, url)
 		Text = url,
 		TextEditable = false,
 		ClearTextOnFocus = false,
-		TextSize = textSize(13),
+		TextSize = Lyra.TextSize(13),
 		Font = Lyra.Font.Regular,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -6250,7 +6146,7 @@ function Window:_linkBlock(card, order, label, url)
 
 	local button
 	local function copy()
-		if copyText(url) then
+		if Lyra.CopyText(url) then
 			button:SetText("Copied!")
 			self:Status(label .. " link copied.", "success")
 			task.delay(1.5, function()
@@ -6281,18 +6177,18 @@ function Container:Link(spec)
 	local window = self.Window
 	local card = self:_add(window:_autoCard(self.Frame, 12, 16))
 
-	local header = new("Frame", {
+	local header = Lyra.Inst("Frame", {
 		LayoutOrder = 1,
 		Size = UDim2.new(1, 0, 0, 44),
 		BackgroundTransparency = 1
 	}, card)
 
-	local badge = new("Frame", {
+	local badge = Lyra.Inst("Frame", {
 		Size = UDim2.fromOffset(44, 44),
 		BorderSizePixel = 0
 	}, header)
 	window:_paint(badge, {BackgroundColor3 = "Raised"})
-	round(badge, 13)
+	Lyra.Round(badge, 13)
 	window:_icon(badge, spec.Icon or "link", UDim2.fromOffset(10, 10), "Accent")
 
 	local heading = window:_text(header, spec.Title or "Link", 17, "Text", true)
@@ -6307,32 +6203,31 @@ function Container:Link(spec)
 	return element(card, {Button = copy})
 end
 
--- A profile card: portrait (image, web image or initial), caption, name, handle, bio and an optional link.
 function Container:Profile(spec)
 	spec = spec or {}
 	local window = self.Window
 	local card = self:_add(window:_autoCard(self.Frame, 8, 12))
 	window:_gradient(card, "AccentDark", "Card", 28)
 
-	local header = new("Frame", {
+	local header = Lyra.Inst("Frame", {
 		LayoutOrder = 1,
 		Size = UDim2.new(1, 0, 0, 52),
 		BackgroundTransparency = 1
 	}, card)
 
-	local portrait = new("Frame", {
+	local portrait = Lyra.Inst("Frame", {
 		Size = UDim2.fromOffset(52, 52),
 		BorderSizePixel = 0
 	}, header)
 	window:_paint(portrait, {BackgroundColor3 = "Accent"})
-	round(portrait, 16)
+	Lyra.Round(portrait, 16)
 	window:_stroke(portrait, 0.32, "Accent")
 
-	local letter = window:_text(portrait, spec.Initial or initials(spec.Title or "?"):sub(1, 1), 28, "Base", true)
+	local letter = window:_text(portrait, spec.Initial or Lyra.Initials(spec.Title or "?"):sub(1, 1), 28, "Base", true)
 	letter.Size = UDim2.fromScale(1, 1)
 	letter.TextXAlignment = Enum.TextXAlignment.Center
 
-	local photo = new("ImageLabel", {
+	local photo = Lyra.Inst("ImageLabel", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Image = tostring(spec.Image or ""),
@@ -6340,7 +6235,7 @@ function Container:Profile(spec)
 		ZIndex = 2,
 		ScaleType = Enum.ScaleType.Crop
 	}, portrait)
-	round(photo, 16)
+	Lyra.Round(photo, 16)
 
 	local caption = window:_text(header, spec.Caption or "PROFILE", 10, "Accent", true)
 	caption.Position = UDim2.fromOffset(64, 0)
@@ -6376,7 +6271,6 @@ function Container:Profile(spec)
 	return element(card, {Photo = photo})
 end
 
--- A rounded picture (banner, preview, logo).
 function Container:Image(spec)
 	if type(spec) ~= "table" then
 		spec = {Image = spec}
@@ -6385,7 +6279,7 @@ function Container:Image(spec)
 	local card = self:_add(window:_card(self.Frame, spec.Height or 140))
 	card.ClipsDescendants = true
 
-	local image = new("ImageLabel", {
+	local image = Lyra.Inst("ImageLabel", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -6395,7 +6289,7 @@ function Container:Image(spec)
 	round(image, 16)
 
 	if spec.Caption then
-		local shade = new("Frame", {
+		local shade = Lyra.Inst("Frame", {
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.fromScale(0, 1),
 			Size = UDim2.new(1, 0, 0, 48),
@@ -6432,7 +6326,7 @@ function Window:_reopenCard(container)
 	local card = container:_add(self:_autoCard(container.Frame, 6, 14))
 	self.ReopenRows = {}
 	for index = 1, 4 do
-		local row = new("Frame", {
+		local row = Lyra.Inst("Frame", {
 			LayoutOrder = index,
 			Size = UDim2.new(1, 0, 0, 22),
 			BackgroundTransparency = 1
