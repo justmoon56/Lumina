@@ -6631,17 +6631,17 @@ function Window:SettingsTab(spec)
 	return tab
 end
 
--- Familiar names for people coming from other libraries: Tab:AddToggle, Window:AddTab…
+-- [[ Familiar names for people coming from other libraries: Tab:AddToggle, Window:AddTab… ]]
 for _, name in ipairs({
 	"Section", "Paragraph", "Label", "Divider", "Button", "ButtonRow", "Action", "Toggle", "Stepper", "Slider", "Dropdown", "Input",
 	"TextArea", "Keybind", "Chips", "Segmented", "Group", "Columns", "Collapsible", "Guide", "Row", "Empty", "List", "Grid", "Preview", "Strip",
 	"Link", "Profile", "Image"
 }) do
-	Container["Add" + name] = Container[name]
+	Container["Add" .. name] = Container[name]
 end
 Window.AddTab = Window.Tab
 Window.Dialog = Window.Confirm
--- Window:Connect(signal, fn): a connection that is disconnected when the window is destroyed.
+-- [[ Window:Connect(signal, fn): a connection that is disconnected when the window is destroyed. ]]
 Window.Connect = Window._connect
 
 function Lyra.GetWindow(...)
